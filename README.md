@@ -33,6 +33,12 @@
 
 ---
 
+## 截图展示
+
+![5G Modem 管理界面](https://github.com/a10463981/modem-5g/raw/main/docs/screenshot.png)
+
+---
+
 ## 文件结构说明
 
 ```
