@@ -1,9 +1,10 @@
 <%+header%>
 
 <%
-local http = require "luci.http"
-local cookie_header = os.getenv("HTTP_COOKIE")
--%>
+-- 获取 LuCI 登录 session cookie
+local sysauth = luci.http.getcookie("sysauth") or ""
+%>
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,66 +18,40 @@ local cookie_header = os.getenv("HTTP_COOKIE")
       height: 100vh;
       margin: 0;
     }
-
     #loadingMessage {
-      margin-bottom: 20px;
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      top: 0; left: 0; right: 0; bottom: 0;
       background-color: white;
       z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: #666;
     }
-
     #embeddedPageContainer {
       position: relative;
       width: 100%;
       height: 100vh;
       overflow: hidden;
     }
-
     #embeddedPage {
       width: 100%;
       height: 100vh;
       border: none;
       transform: translateY(-570px);
     }
-    footer {
-        font-size: .0rem;
-        overflow: hidden;
-        padding: .0rem 0 !important;
-        text-align: right;
-        white-space: nowrap;
-        color: #aaa;
-        visibility: hidden;
-        height: 0px !important;
-    }
-    header .fill {
-        padding: .0rem 0 !important;
-        border-bottom: 0 solid rgba(255,255,255,0.08) !important;
-        display: flex;
-        height: 0px !important;
-    }
+    footer, header .fill { display: none !important; height: 0 !important; }
     .main-right > #maincontent > .container {
-        margin: 0 !important;
-        flex-grow: 1;
-    }
-    /* 强制覆盖原有样式，使用 !important 确保优先级 */
-    .container {
+      margin: 0 !important;
+      flex-grow: 1;
+      padding: 0 !important;
+      max-width: 100% !important;
       width: 100% !important;
-      max-width: none !important; /* 取消最大宽度限制 */
-      margin-left: 0 !important;
-      margin-right: 0 !important;
-      zoom: normal !important; /* 取消缩放 */
-      padding: 0 15px; /* 可选：添加内边距避免内容贴边 */
-      box-sizing: border-box !important; /* 确保padding不影响宽度 */
     }
-
-    /* 左下角浮动按钮样式 */
     .float-button {
       position: fixed;
-      left: 2px;
+      left: 10px;
       bottom: 20px;
       width: 60px;
       height: 60px;
@@ -86,51 +61,44 @@ local cookie_header = os.getenv("HTTP_COOKIE")
       border: none;
       font-size: 16px;
       cursor: pointer;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      z-index: 9; /* 确保在iframe上方但在加载提示下方 */
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      z-index: 9999;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.3s ease;
     }
-
-    .float-button:hover {
-      background-color: #0056b3;
-      transform: scale(1.05);
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-    }
+    .float-button:hover { background-color: #0056b3; }
   </style>
 </head>
 <body>
-  <div id="loadingMessage">正在加载API...</div>
+  <div id="loadingMessage">正在加载5G管理界面...</div>
   <div id="embeddedPageContainer">
-    <iframe id="embeddedPage" src="" onload="showHalfPage()"></iframe>
+    <iframe id="embeddedPage" src=""></iframe>
   </div>
-  <!-- 左下角浮动按钮 -->
-  <button class="float-button" onclick="handleFloatButtonClick()">PWRT</button>
+  <button class="float-button" id="backBtn">返回</button>
   <script>
-    function showHalfPage() {
+    var MODEMSERVER_KEY = "<%=sysauth%>";
+
+    function showPage() {
       document.getElementById('loadingMessage').style.display = 'none';
-      var embeddedPage = document.getElementById('embeddedPage');
-      embeddedPage.style.transform = 'translateY(0)';
+      document.getElementById('embeddedPage').style.transform = 'translateY(0)';
     }
-    function modemserver() {
-      const currentUrl = window.location.href;
-      const urlObj = new URL(currentUrl);
-      const targetSrc = `http://${urlObj.hostname}:8080/#/login?url=${urlObj.hostname}&port=${urlObj.port ?? "80"}&key=<%=cookie_header%>`;
-      document.getElementById('embeddedPage').src = targetSrc;
+
+    function initModemUI() {
+      var hostname = window.location.hostname;
+      var port = window.location.port || '80';
+      var key = encodeURIComponent(MODEMSERVER_KEY);
+      var src = 'http://' + hostname + ':8080/#/login?url=' + hostname + '&port=' + port + '&key=' + key;
+      var iframe = document.getElementById('embeddedPage');
+      iframe.onload = showPage;
+      iframe.src = src;
     }
-    function handleFloatButtonClick() {
-          const currentUrl = window.location.href;
-          const urlObj = new URL(currentUrl);
-          const hostname = urlObj.hostname;
-          const cookieValue = "<%=cookie_header%>";
-          document.cookie = `${cookieValue}; Path=/; Domain=${hostname}; SameSite=Lax`;
-          const targetUrl = `/cgi-bin/luci`;
-          console.log('准备跳转到:', targetUrl);
-          window.location.href = targetUrl;
-    }
-    window.onload = modemserver;
+
+    document.getElementById('backBtn').onclick = function() {
+      window.location.href = '/cgi-bin/luci';
+    };
+
+    window.onload = initModemUI;
   </script>
 </body>
 <%+footer%>
