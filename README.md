@@ -3,6 +3,7 @@
 **5G 模组全能管理插件** — 有房大佬出品
 
 支持 Quectel RM520N-GL 及全系列 Quectel 5G 模组 | 适用于 ImmortalWrt / OpenWRT | ARM64 (aarch64_generic)
+<img width="1917" height="1041" alt="企业微信截图_17744270015841" src="https://github.com/user-attachments/assets/b10c05b3-e9f7-4285-884f-02e300787100" />
 
 ---
 
