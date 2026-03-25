@@ -1,12 +1,38 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2013 OpenWrt.org
+# Fixed for iStoreOS / ImmortalWrt (Ash shell compatible)
+# 关键修复：
+#   1. 用反引号 `` `...` `` 替代 $(...) — Ash shell 不支持 $()
+#   2. 不再 unbind/rebind qmi_wwan — kernel 已经正确创建 wwan0，只需确保它 UP
 
 START=20
 USE_PROCD=1
 
-start_service()
-{
-	procd_open_instance
-	procd_set_param command "/sbin/usbmode" -s
-	procd_close_instance
+start_service() {
+    procd_open_instance
+    procd_set_param command "/bin/sh" "-c" "
+        # 等待 USB 设备就绪
+        for i in \`seq 1 30\`; do
+            [ -d /sys/bus/usb/devices/2-1 ] && break
+            sleep 1
+        done
+        
+        # 检查是否是 Quectel 模组
+        vid=\`cat /sys/bus/usb/devices/2-1/idVendor 2>/dev/null\`
+        pid=\`cat /sys/bus/usb/devices/2-1/idProduct 2>/dev/null\`
+        if [ \"\$vid:\$pid\" = \"2c7c:0801\" ]; then
+            # 等待 kernel 创建 wwan0（通常在 boot 时已创建）
+            for i in \`seq 1 20\`; do
+                [ -e /dev/wwan0 ] && break
+                sleep 1
+            done
+            # 确保 wwan0 是 UP 状态
+            [ -e /dev/wwan0 ] && ip link set wwan0 up 2>/dev/null
+            [ -e /dev/wwan0 ] && echo 'usbmode: wwan0 ready'
+        fi
+    "
+    procd_close_instance
+}
+
+stop_service() {
+    :
 }

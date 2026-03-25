@@ -28,14 +28,14 @@ jobs:
       - name: Link package into SDK
         run: |
           cd sdk-extract
-          ln -sf $(realpath ../modem-5g) package/modem-5g
+          ln -sf $(realpath ../modem-5g) package/luci-app-modemserver
           ls -la package/ | grep modem
 
       - name: Download .config
         run: |
           cd sdk-extract
           wget -q "https://downloads.immortalwrt.org/releases/23.05.3/targets/rockchip/armv8/config.buildinfo" -O .config
-          echo "CONFIG_PACKAGE_modem-5g=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-modemserver=y" >> .config
           echo "CONFIG_PACKAGE_luci-compat=y" >> .config
 
       - name: Install feeds
@@ -48,13 +48,13 @@ jobs:
         run: |
           cd sdk-extract
           make defconfig
-          make -j$(nproc) package/modem-5g/compile V=s 2>&1 | tail -50
+          make -j$(nproc) package/luci-app-modemserver/compile V=s 2>&1 | tail -50
 
       - name: Collect IPK files
         run: |
           mkdir -p output
-          find sdk-extract -name "modem-5g_*.ipk" -type f 2>/dev/null
-          find sdk-extract -path "*/bin/packages/*" -name "modem-5g*.ipk" -type f -exec cp {} output/ \;
+          find sdk-extract -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null
+          find sdk-extract -path "*/bin/packages/*" -name "luci-app-modemserver*.ipk" -type f -exec cp {} output/ \;
           ls -lh output/
 
       - name: Upload IPK artifacts

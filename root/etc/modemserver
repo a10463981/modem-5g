@@ -1,1 +1,29 @@
-#!/bin/sh /etc/rc.common # Copyright (C) 2016 Aleksander Morgado <aleksander@aleksander.es>  USE_PROCD=1 START=99 STOP=10  NAME="modemserver" DAEMON="/usr/bin/$NAME" PID_FILE="/var/run/$NAME.pid" PORT=8080  # 绔彛鍙傛暟鍊硷紝渚夸簬鍚庣画淇敼  start_service() {     sleep 1  # 寤惰繜1绉掞紝纭繚绯荤粺绋冲畾     # 浣跨敤 procd 鍚姩鏈嶅姟     procd_open_instance     procd_set_param command "$DAEMON" -port "$PORT"  # 姝ゅ娣诲姞绔彛鍙傛暟     # procd_set_param stdout 1    # 鏍囧噯杈撳嚭閲嶅畾鍚戝埌绯荤粺鏃ュ織     # procd_set_param stderr 1    # 鏍囧噯閿欒閲嶅畾鍚戝埌绯荤粺鏃ュ織     procd_set_param pidfile "$PID_FILE"     procd_set_param respawn 30 5 # 鏈€澶氶噸璇?娆★紝闂撮殧5绉?    procd_close_instance }  stop_service() {          # 鍋滄鏈嶅姟锛坧rocd 浼氳嚜鍔ㄥ鐞哖ID锛?    rm -f "$PID_FILE" }  restart() {     stop     start }
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2016 Aleksander Morgado <aleksander@aleksander.es>
+# Ash shell 修复版
+
+USE_PROCD=1
+START=99
+STOP=10
+
+NAME="modemserver"
+DAEMON="/usr/bin/$NAME"
+PID_FILE="/var/run/$NAME.pid"
+PORT=8080
+
+start_service() {
+    sleep 1
+    procd_open_instance
+    procd_set_param command "$DAEMON" -port "$PORT"
+    procd_set_param pidfile "$PID_FILE"
+    procd_set_param respawn 30 5
+    procd_close_instance
+}
+
+stop_service() {
+    rm -f "$PID_FILE"
+}
+
+restart() {
+    stop; start
+}
