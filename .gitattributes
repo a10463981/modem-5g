@@ -1,0 +1,15 @@
+# Force shell scripts to always use LF line endings
+*.sh text eol=lf
+*.lua text eol=lf
+*.htm text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.txt text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.db binary
+*.ko binary
+*.zip binary
+*.ipk binary
