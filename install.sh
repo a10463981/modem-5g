@@ -101,4 +101,3 @@ echo "如需手动重启服务:"
 echo "  /etc/init.d/modemserver restart   # Web UI"
 echo "  /etc/init.d/modemsrv_helper start  # 自动拨号"
 echo ""
-}
