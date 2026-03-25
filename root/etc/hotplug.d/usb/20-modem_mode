@@ -1,0 +1,35 @@
+#!/bin/sh
+LOGGER="logger -t hotplug-modem"
+MODEM_USB_IDS="2c7c:0801 2c7c:0802 2c7c:0803 2c7c:0804"
+
+is_modem() {
+    local vid="$1" pid="$2"
+    for id in $MODEM_USB_IDS; do
+        [ "$vid:$pid" = "$id" ] && return 0
+    done
+    return 1
+}
+
+start_modem() {
+    $LOGGER "Quectel modem detected, starting services..."
+    /etc/init.d/usbmode start
+    sleep 2
+    /etc/init.d/quectel-CM start 2>/dev/null
+    /etc/init.d/modemserver start 2>/dev/null
+}
+
+stop_modem() {
+    /etc/init.d/quectel-CM stop 2>/dev/null
+}
+
+[ "$ACTION" != "add" ] && [ "$ACTION" != "remove" ] && exit 0
+
+if [ "$SUBSYSTEM" = "usb" ] && [ -n "$PRODUCT" ]; then
+    vid=$(echo "$PRODUCT" | cut -d/ -f1)
+    pid=$(echo "$PRODUCT" | cut -d/ -f2)
+    if is_modem "$vid" "$pid"; then
+        [ "$ACTION" = "add" ] && start_modem
+        [ "$ACTION" = "remove" ] && stop_modem
+    fi
+fi
+exit 0

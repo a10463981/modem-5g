@@ -1,0 +1,34 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2016 Aleksander Morgado <aleksander@aleksander.es>
+
+USE_PROCD=1
+START=99
+STOP=10
+
+NAME="modemserver"
+DAEMON="/usr/bin/$NAME"
+PID_FILE="/var/run/$NAME.pid"
+PORT=8080  # 端口参数值，便于后续修改
+
+start_service() {
+    sleep 1  # 延迟1秒，确保系统稳定
+    # 使用 procd 启动服务
+    procd_open_instance
+    procd_set_param command "$DAEMON" -port "$PORT"  # 此处添加端口参数
+    # procd_set_param stdout 1    # 标准输出重定向到系统日志
+    # procd_set_param stderr 1    # 标准错误重定向到系统日志
+    procd_set_param pidfile "$PID_FILE"
+    procd_set_param respawn 30 5 # 最多重试3次，间隔5秒
+    procd_close_instance
+}
+
+stop_service() {
+    
+    # 停止服务（procd 会自动处理PID）
+    rm -f "$PID_FILE"
+}
+
+restart() {
+    stop
+    start
+}

@@ -1,0 +1,65 @@
+name: Build IPK
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Download ImmortalWrt SDK
+        run: |
+          mkdir -p sdk-extract
+          cd sdk-extract
+          wget --timeout=120 -q "https://downloads.immortalwrt.org/releases/23.05.3/targets/rockchip/armv8/immortalwrt-sdk-23.05.3-rockchip-armv8_gcc-12.3.0_musl.Linux-x86_64.tar.xz" -O sdk.tar.xz
+          tar xf sdk.tar.xz
+          SDK_DIR=$(find . -maxdepth 1 -type d -name "immortalwrt-sdk-*" | head -1)
+          mv "$SDK_DIR" ../sdk-extract
+
+      - name: Link package into SDK
+        run: |
+          cd sdk-extract
+          ln -sf $(realpath ../modem-5g) package/modem-5g
+          ls -la package/ | grep modem
+
+      - name: Download .config
+        run: |
+          cd sdk-extract
+          wget -q "https://downloads.immortalwrt.org/releases/23.05.3/targets/rockchip/armv8/config.buildinfo" -O .config
+          echo "CONFIG_PACKAGE_modem-5g=y" >> .config
+          echo "CONFIG_PACKAGE_luci-compat=y" >> .config
+
+      - name: Install feeds
+        run: |
+          cd sdk-extract
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a -p luci
+
+      - name: Build package
+        run: |
+          cd sdk-extract
+          make defconfig
+          make -j$(nproc) package/modem-5g/compile V=s 2>&1 | tail -50
+
+      - name: Collect IPK files
+        run: |
+          mkdir -p output
+          find sdk-extract -name "modem-5g_*.ipk" -type f 2>/dev/null
+          find sdk-extract -path "*/bin/packages/*" -name "modem-5g*.ipk" -type f -exec cp {} output/ \;
+          ls -lh output/
+
+      - name: Upload IPK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipk-packages
+          path: output/*.ipk
+          retention-days: 7

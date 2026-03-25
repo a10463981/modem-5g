@@ -1,0 +1,7 @@
+config modem 'modem'
+	option apn 'cmnet'
+	option interface 'usb0'
+	option port '8080'
+	option ipv4 '1'
+	option ipv6 '1'
+	option autostart '1'
