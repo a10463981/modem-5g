@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     permissions:
       contents: read
 
@@ -20,46 +20,59 @@ jobs:
         run: |
           mkdir -p sdk-extract
           cd sdk-extract
-          wget --timeout=120 -q "https://downloads.immortalwrt.org/releases/23.05.3/targets/rockchip/armv8/immortalwrt-sdk-23.05.3-rockchip-armv8_gcc-12.3.0_musl.Linux-x86_64.tar.xz" -O sdk.tar.xz
+          wget --timeout=300 -q "https://downloads.immortalwrt.org/releases/23.05.3/targets/rockchip/armv8/immortalwrt-sdk-23.05.3-rockchip-armv8_gcc-12.3.0_musl.Linux-x86_64.tar.xz" -O sdk.tar.xz
           tar xf sdk.tar.xz
           SDK_DIR=$(find . -maxdepth 1 -type d -name "immortalwrt-sdk-*" | head -1)
-          mv "$SDK_DIR" ../sdk-extract
+          mv "$SDK_DIR" ../sdk
+          cd ..
+          echo "SDK extracted successfully"
+          ls -la sdk/
 
       - name: Link package into SDK
         run: |
-          cd sdk-extract
-          ln -sf $(realpath ../modem-5g) package/luci-app-modemserver
+          cd sdk
+          mkdir -p package/luci-app-modemserver
+          rm -rf package/luci-app-modemserver
+          ln -s $(realpath ../modem-5g) package/luci-app-modemserver
           ls -la package/ | grep modem
 
       - name: Download .config
         run: |
-          cd sdk-extract
-          wget -q "https://downloads.immortalwrt.org/releases/23.05.3/targets/rockchip/armv8/config.buildinfo" -O .config
+          cd sdk
+          wget --timeout=60 -q "https://downloads.immortalwrt.org/releases/23.05.3/targets/rockchip/armv8/config.buildinfo" -O .config
           echo "CONFIG_PACKAGE_luci-app-modemserver=y" >> .config
           echo "CONFIG_PACKAGE_luci-compat=y" >> .config
+          cat .config | grep -E "modem|luci"
 
-      - name: Install feeds
+      - name: Update feeds
         run: |
-          cd sdk-extract
-          ./scripts/feeds update -a
-          ./scripts/feeds install -a -p luci
+          cd sdk
+          ./scripts/feeds update -a 2>&1 | tail -5
+
+      - name: Install required packages from feeds
+        run: |
+          cd sdk
+          ./scripts/feeds install -a luci luci-lib-jsonc luci-lib-base luci-lib-nixio 2>&1 | tail -10
 
       - name: Build package
         run: |
-          cd sdk-extract
+          cd sdk
           make defconfig
-          make -j$(nproc) package/luci-app-modemserver/compile V=s 2>&1 | tail -50
+          make -j$(nproc) package/luci-app-modemserver/compile V=s 2>&1 | tail -80
 
       - name: Collect IPK files
         run: |
           mkdir -p output
-          find sdk-extract -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null
-          find sdk-extract -path "*/bin/packages/*" -name "luci-app-modemserver*.ipk" -type f -exec cp {} output/ \;
-          ls -lh output/
+          find sdk -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null
+          find sdk -path "*/bin/packages/aarch64_generic/*" -name "luci-app-modemserver*.ipk" -type f -exec cp -v {} output/ \; 2>/dev/null
+          find sdk -path "*/bin/packages/*/luci/*" -name "luci-app-modemserver*.ipk" -type f -exec cp -v {} output/ \; 2>/dev/null
+          echo "=== Output files ==="
+          ls -lh output/ 2>/dev/null || echo "No IPK found"
 
       - name: Upload IPK artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ipk-packages
           path: output/*.ipk
-          retention-days: 7
+          retention-days: 30
