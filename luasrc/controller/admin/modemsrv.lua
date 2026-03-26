@@ -5,7 +5,7 @@ function index()
     entry({"admin", "modem"}, firstchild(), _("Modem"), 25).dependent = false
 
     -- 5Gmodem 页面（iframe 嵌入式 modemserver WebUI）
-    entry({"admin", "modem", "5Gmodem"}, template("modemserver/5Gmodem"), _("综合平台"), 1).dependent = false
+    entry({"admin", "modem", "5Gmodem"}, template("modemsrv/5Gmodem"), _("综合平台"), 1).dependent = false
 
     -- 自动验证（被 modemserver 调用）
     entry({"admin", "modem", "autoverify"}, call("AutoverifyCtrl"), nil).leaf = true
