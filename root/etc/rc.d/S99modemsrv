@@ -13,5 +13,5 @@ start() {
         sleep 1
     done
     ip link set wwan0 up 2>/dev/null
-    quectel-CM-M -s cmnet &
+    quectel-CM-M -s cmnet -4 -6 &
 }

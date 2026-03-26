@@ -25,8 +25,8 @@ case "$vid:$pid" in
     # 确保 wwan0 UP
     [ -e /dev/wwan0 ] && ip link set wwan0 up 2>/dev/null
 
-    # 启动 quectel-CM-M 拨号
-    [ -e /usr/bin/quectel-CM-M ] && quectel-CM-M -s cmnet &
+    # 启动 quectel-CM-M 拨号（IPv4+IPv6 双栈）
+    [ -e /usr/bin/quectel-CM-M ] && quectel-CM-M -s cmnet -4 -6 &
     ;;
 *)
     exit 0

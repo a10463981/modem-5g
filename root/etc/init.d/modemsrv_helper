@@ -17,6 +17,6 @@ start() {
     # 确保 wwan0 是 UP 状态
     ip link set wwan0 up 2>/dev/null
     
-    # 启动 quectel-CM-M 拨号（APN: cmnet）
-    quectel-CM-M -s cmnet &
+    # 启动 quectel-CM-M 拨号（APN: cmnet，IPv4+IPv6 双栈）
+    quectel-CM-M -s cmnet -4 -6 &
 }
