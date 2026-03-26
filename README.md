@@ -8,6 +8,19 @@
 
 ---
 
+## 快速导航
+
+| 文档 | 说明 |
+|------|------|
+| [modem-5g-v1.0.0.zip](modem-5g-v1.0.0.zip) | **完整安装包（推荐下载）** |
+| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | **问题排查手册** — 包含所有已知问题、原因、解决方法、完整文件路径、权限说明 |
+
+> 💡 **将 TROUBLESHOOTING.md 交给 AI，可快速定位和解决各类问题**
+
+适用于 ImmortalWrt / OpenWRT | ARM64 (aarch64_generic) | Quectel RM520N-GL 及全系列 5G 模组
+
+---
+
 ## 免责声明
 
 > ⚠️ **仅供学习与测试使用**
