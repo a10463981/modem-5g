@@ -262,6 +262,39 @@ modem-5g/
 
 ---
 
+### 问题9：IPv6 无法拨号（只有 IPv4 正常）
+
+**现象**：
+- `quectel-CM-M -s cmnet` 默认只建立 IPv4 连接
+- `wwan0` 只有 IPv4 地址，无 IPv6 地址
+
+**根本原因**：
+- `quectel-CM-M` 启动参数缺少 IPv6 标志
+- 默认参数 `-4` 只建立 IPv4 数据连接
+
+**错误方向**：
+- 同时启动两个 `quectel-CM-M` 实例（一个 `-4`，一个 `-6`）
+- 两个实例竞争同一个 `/dev/cdc-wdm0`，导致都失败（`QmiWwanGetClientID message timeout`）
+
+**正确方向**：
+- 单个 `quectel-CM-M` 实例同时支持 IPv4+IPv6：`quectel-CM-M -s cmnet -4 -6 &`
+- 参数 `-4` 启用 IPv4，`-6` 启用 IPv6，可同时生效
+
+**涉及文件**（3个，均需修改）：
+| 文件 | 修改内容 |
+|------|---------|
+| `root/etc/init.d/modemsrv_helper` | `quectel-CM-M -s cmnet` → `quectel-CM-M -s cmnet -4 -6` |
+| `root/etc/rc.d/S99modemsrv` | `quectel-CM-M -s cmnet` → `quectel-CM-M -s cmnet -4 -6` |
+| `root/etc/hotplug.d/usb/20-modem_mode` | `quectel-CM-M -s cmnet` → `quectel-CM-M -s cmnet -4 -6` |
+
+**验证方法**：
+```bash
+ip addr show wwan0      # IPv4: inet 10.x.x.x/xx
+ip -6 addr show wwan0  # IPv6: inet6 2409:xxxx:xxxx:x/64
+```
+
+---
+
 ## 六、三层启动逻辑
 
 ```
@@ -275,7 +308,7 @@ S20usbmode (START=20)
 
 S99modemsrv (START=99)
   → 等待 wwan0
-  → quectel-CM-M -s cmnet &
+  → quectel-CM-M -s cmnet -4 -6 &
 
 S99modemserver (START=99)
   → /usr/bin/modemserver -port 8080
