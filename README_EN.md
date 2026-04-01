@@ -12,7 +12,7 @@ For ImmortalWrt / OpenWRT | ARM64 (aarch64_generic) | Quectel RM520N-GL and Full
 
 | Document | Description |
 |----------|-------------|
-| [modem-5g-v1.0.0.zip](modem-5g-v1.0.0.zip) | **Complete installation package (Recommended)** |
+| [modem-5g-v1.0.0.zip](modem-5g-v1.1.3.zip) | **Complete installation package (Recommended)** |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | **Troubleshooting Manual** — All known issues, causes, solutions, complete file paths, permissions |
 
 > 💡 **Give TROUBLESHOOTING.md to any AI to quickly diagnose and solve problems**
