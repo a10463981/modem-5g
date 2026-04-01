@@ -12,7 +12,7 @@
 
 | 文档 | 说明 |
 |------|------|
-| [modem-5g-v1.0.0.zip](modem-5g-v1.0.0.zip) | **完整安装包（推荐下载）** |
+| [modem-5g-v1.0.0.zip](modem-5g-v1.1.3.zip) | **完整安装包（推荐下载）** |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | **问题排查手册** — 包含所有已知问题、原因、解决方法、完整文件路径、权限说明 |
 
 > 💡 **将 TROUBLESHOOTING.md 交给 AI，可快速定位和解决各类问题**
