@@ -5,7 +5,10 @@ PKG_VERSION:=1.0.0
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0
 PKG_MAINTAINER:=有房大佬
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
+
+# No kernel modules, no compilation needed - pure LuCI app
+PKG_BUILD_DEPENDS:=lua/host
+PKG_USE_MKFILE:=0
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -14,7 +17,7 @@ define Package/luci-app-modemserver
   CATEGORY:=LuCI
   SUBMENU:=5G Modem
   TITLE:=5G Modem Server Management Interface
-  DEPENDS:=+libc +luci-compat +kmod-usb-core +kmod-usb-net +kmod-usb-serial-option +kmod-usb-acm +kmod-usb-wdm +kmod-usb-net-cdc-ether +kmod-usb-net-cdc-mbim +kmod-usb-net-cdc-ncm +kmod-usb-net-qmi-wwan
+  DEPENDS:=+luci-compat +kmod-usb-core +kmod-usb-net +kmod-usb-serial-option +kmod-usb-acm +kmod-usb-wdm +kmod-usb-net-cdc-ether +kmod-usb-net-cdc-mbim +kmod-usb-net-cdc-ncm +kmod-usb-net-qmi-wwan
   URL:=https://github.com/a10463981/modem-5g
 endef
 
@@ -25,9 +28,9 @@ endef
 
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)
-	$(CP) ./luasrc/* $(PKG_BUILD_DIR)/luasrc/
-	$(CP) ./root/* $(PKG_BUILD_DIR)/root/
-	$(CP) ./files/* $(PKG_BUILD_DIR)/files/
+	cp -r $(CURDIR)/luasrc/* $(PKG_BUILD_DIR)/luasrc/ 2>/dev/null || true
+	cp -r $(CURDIR)/root/* $(PKG_BUILD_DIR)/root/ 2>/dev/null || true
+	cp -r $(CURDIR)/files/* $(PKG_BUILD_DIR)/files/ 2>/dev/null || true
 endef
 
 define Build/Configure
@@ -38,9 +41,10 @@ define Build/Compile
 endef
 
 define Package/luci-app-modemserver/install
-	$(CP) $(PKG_BUILD_DIR)/luasrc/* $(1)/usr/lib/lua/luci/
-	$(CP) $(PKG_BUILD_DIR)/root/* $(1)/
-	$(CP) $(PKG_BUILD_DIR)/files/* $(1)/
+	cp -r $(PKG_BUILD_DIR)/luasrc/usr/lib/lua/luci/* $(1)/usr/lib/lua/luci/
+	cp -r $(PKG_BUILD_DIR)/root/etc/* $(1)/etc/
+	cp -r $(PKG_BUILD_DIR)/root/usr/* $(1)/usr/
+	cp -r $(PKG_BUILD_DIR)/files/* $(1)/
 	chmod 0755 $(1)/usr/bin/modemserver
 	chmod 0755 $(1)/usr/bin/quectel-CM-M
 	chmod 0755 $(1)/usr/bin/sendat
