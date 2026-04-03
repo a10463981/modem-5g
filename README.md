@@ -10,7 +10,7 @@
 ---
 
 ## 图片展示
-<img width="1904" height="886" alt="tupian" src="https://github.com/a10463981/modem-5g/blob/master/tu1.png" />
+<img width="1904" height="886" alt="截图" src="images/tu1.png" />
 
 ---
 

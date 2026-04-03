@@ -11,7 +11,7 @@ For ImmortalWrt / OpenWRT | ARM64 (aarch64_generic) | Quectel RM520N-GL and Full
 ---
 
 ## Image Display
-<img width="1904" height="886" alt="tupian" src="https://github.com/a10463981/modem-5g/blob/master/tu1.png" />
+<img width="1904" height="886" alt="Screenshot" src="images/tu1.png" />
 
 
 ---
