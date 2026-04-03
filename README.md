@@ -1,4 +1,4 @@
-# 5G模组全能管理插件（modem-5g）
+# 5G模组全能管理插件（modem-5g） luci-app-modemserver
 
 **有房大佬出品** | **AAYY兄 整理提供** | 仅供测试研究
 
