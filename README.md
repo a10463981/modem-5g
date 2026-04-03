@@ -6,6 +6,12 @@
 
 适用于 ImmortalWrt / OpenWRT | ARM64 (aarch64_generic) | Quectel RM520N-GL 及全系列 5G 模组
 
+
+---
+
+## 图片展示
+<img width="1904" height="886" alt="tupian" src="https://github.com/a10463981/modem-5g/blob/master/tu1.png" />
+
 ---
 
 ## 快速导航
