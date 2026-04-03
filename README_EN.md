@@ -116,8 +116,6 @@ Browser → http://192.168.1.1:8080
 | Brand | Model | VID:PID | Status |
 |-------|-------|---------|--------|
 | Quectel | RM520N-GL | 2c7c:0801 | ✅ Tested |
-| Quectel | RM520N-GL | 2c7c:0900 | ⬜ Untested |
-| Quectel | Others | 2c7c:030a | ⬜ Untested |
 
 > All Quectel 5G/4G modems using QMI protocol should be supported in theory.
 
