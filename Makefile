@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-modemserver
 PKG_VERSION:=1.0.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_LICENSE:=GPL-3.0
 PKG_MAINTAINER:=有房大佬
 
@@ -18,6 +18,8 @@ define Package/luci-app-modemserver
   SUBMENU:=5G Modem
   TITLE:=5G Modem Server Management Interface
   DEPENDS:=+luci-compat +kmod-usb-core +kmod-usb-net +kmod-usb-serial-option +kmod-usb-acm +kmod-usb-wdm +kmod-usb-net-cdc-ether +kmod-usb-net-cdc-mbim +kmod-usb-net-cdc-ncm +kmod-usb-net-qmi-wwan
+  CONFLICTS:=usb-modeswitch
+  REPLACES:=usb-modeswitch
   URL:=https://github.com/a10463981/modem-5g
 endef
 
@@ -48,29 +50,40 @@ define Package/luci-app-modemserver/install
 	cp -r $(PKG_BUILD_DIR)/luasrc/controller/* $(1)/usr/lib/lua/luci/controller/
 	cp -r $(PKG_BUILD_DIR)/luasrc/model/* $(1)/usr/lib/lua/luci/model/
 	cp -r $(PKG_BUILD_DIR)/luasrc/view/* $(1)/usr/lib/lua/luci/view/
-	# init.d / hotplug / config
-	cp -r $(PKG_BUILD_DIR)/root/etc $(1)/
+	# init.d / hotplug / config - individual files only (avoid system file conflicts)
+	mkdir -p $(1)/etc/init.d
+	mkdir -p $(1)/etc/config
+	mkdir -p $(1)/etc/hotplug.d/usb
+	mkdir -p $(1)/etc/rc.d
+	cp $(PKG_BUILD_DIR)/root/etc/init.d/modemserver $(1)/etc/init.d/
+	cp $(PKG_BUILD_DIR)/root/etc/init.d/modemsrv_helper $(1)/etc/init.d/
+	cp $(PKG_BUILD_DIR)/root/etc/config/modem $(1)/etc/config/
+	cp $(PKG_BUILD_DIR)/root/etc/hotplug.d/usb/20-modem_mode $(1)/etc/hotplug.d/usb/
+	# rc.d symlinks (if present)
+	[ -f $(PKG_BUILD_DIR)/root/etc/rc.d/S99modemserver ] && \
+		cp $(PKG_BUILD_DIR)/root/etc/rc.d/S99modemserver $(1)/etc/rc.d/ || true
 	# bin scripts
-	cp -r $(PKG_BUILD_DIR)/files/usr $(1)/
+	mkdir -p $(1)/usr/bin
+	cp $(PKG_BUILD_DIR)/files/usr/bin/modemserver $(1)/usr/bin/
+	cp $(PKG_BUILD_DIR)/files/usr/bin/quectel-CM-M $(1)/usr/bin/
+	cp $(PKG_BUILD_DIR)/files/usr/bin/sendat $(1)/usr/bin/
+	cp $(PKG_BUILD_DIR)/files/usr/bin/tom_modem $(1)/usr/bin/
 	# set executable permissions
 	chmod 0755 $(1)/usr/bin/modemserver
 	chmod 0755 $(1)/usr/bin/quectel-CM-M
 	chmod 0755 $(1)/usr/bin/sendat
 	chmod 0755 $(1)/usr/bin/tom_modem
 	chmod 0755 $(1)/etc/init.d/modemserver
-	chmod 0755 $(1)/etc/init.d/usbmode
 	chmod 0755 $(1)/etc/init.d/modemsrv_helper
 	chmod 0755 $(1)/etc/hotplug.d/usb/20-modem_mode
 endef
 
 define Package/luci-app-modemserver/postinst
 #!/bin/sh
-chmod +x /etc/init.d/modemserver /etc/init.d/usbmode /etc/init.d/modemsrv_helper
+chmod +x /etc/init.d/modemserver /etc/init.d/modemsrv_helper
 chmod +x /etc/hotplug.d/usb/20-modem_mode
-/etc/init.d/usbmode enable 2>/dev/null
 /etc/init.d/modemsrv_helper enable 2>/dev/null
 /etc/init.d/modemserver enable 2>/dev/null
-/etc/init.d/usbmode start 2>/dev/null
 /etc/init.d/modemsrv_helper start 2>/dev/null
 /etc/init.d/modemserver start 2>/dev/null
 exit 0
