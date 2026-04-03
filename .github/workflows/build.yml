@@ -169,6 +169,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ github.event.release.tag_name }}"
+          # Clone repo so gh release upload has access to .git for tag operations
+          git clone --depth=1 https://github.com/${{ github.repository }}.git /tmp/repo
+          cd /tmp/repo
           find artifacts/ -name "*.ipk" -type f | while read f; do
             echo "Uploading: $f -> $TAG"
             gh release upload "$TAG" "$f" --clobber
