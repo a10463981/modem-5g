@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-modemserver
 PKG_VERSION:=1.0.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_LICENSE:=GPL-3.0
 PKG_MAINTAINER:=有房大佬
 
@@ -26,6 +26,19 @@ endef
 define Package/luci-app-modemserver/description
  5G模组管理界面 (Web UI 端口8080)
  有房大佬出品 | 包含: modemserver, quectel-CM-M, sendat, tom_modem
+
+ ============================================================
+ 【安装必读】
+ 本包文件 /etc/init.d/usbmode 和 /etc/usb-mode.json 与系统自带
+ 的 usb-modeswitch 包冲突（内容不同，本包为 Quectel 5G 定制版）。
+ 安装时必须加 --force-overwrite 参数，否则 opkg 会报文件冲突错误。
+
+ 正确安装命令：
+   opkg install /tmp/upload.ipk --force-overwrite
+
+ 卸载命令：
+   opkg remove luci-app-modemserver
+ ============================================================
 endef
 
 define Build/Prepare

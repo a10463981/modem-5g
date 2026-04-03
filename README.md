@@ -14,6 +14,21 @@
 
 ---
 
+## ⚠️ 安装必读 — 必须加 --force-overwrite
+
+本插件的 `/etc/init.d/usbmode` 和 `/etc/usb-mode.json` 与系统 `usb-modeswitch` 包存在文件冲突（本包为 Quectel 5G 定制版，内容与系统通用版不同）。
+
+**安装命令：**
+```bash
+opkg install /tmp/upload.ipk --force-overwrite
+```
+**卸载命令：**
+```bash
+opkg remove luci-app-modemserver
+```
+
+---
+
 ## 快速导航
 
 | 文档 | 说明 |
