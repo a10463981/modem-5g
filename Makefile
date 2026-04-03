@@ -41,12 +41,13 @@ define Build/Compile
 endef
 
 define Package/luci-app-modemserver/install
-	# LuCI controller (luasrc/controller/* -> /usr/lib/lua/luci/controller/)
+	# LuCI controller / model / view - create dirs first
+	mkdir -p $(1)/usr/lib/lua/luci/controller
+	mkdir -p $(1)/usr/lib/lua/luci/model
+	mkdir -p $(1)/usr/lib/lua/luci/view
 	cp -r $(PKG_BUILD_DIR)/luasrc/controller/* $(1)/usr/lib/lua/luci/controller/
-	# LuCI view (luasrc/view/* -> /usr/lib/lua/luci/view/)
-	cp -r $(PKG_BUILD_DIR)/luasrc/view/* $(1)/usr/lib/lua/luci/view/
-	# LuCI model (luasrc/model/* -> /usr/lib/lua/luci/model/)
 	cp -r $(PKG_BUILD_DIR)/luasrc/model/* $(1)/usr/lib/lua/luci/model/
+	cp -r $(PKG_BUILD_DIR)/luasrc/view/* $(1)/usr/lib/lua/luci/view/
 	# init.d / hotplug / config
 	cp -r $(PKG_BUILD_DIR)/root/etc $(1)/
 	# bin scripts
