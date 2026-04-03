@@ -6,7 +6,7 @@ PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0
 PKG_MAINTAINER:=有房大佬
 
-# No kernel modules, no compilation needed - pure LuCI app
+# No compilation needed - pure LuCI app + shell scripts
 PKG_BUILD_DEPENDS:=lua/host
 PKG_USE_MKFILE:=0
 
@@ -28,9 +28,9 @@ endef
 
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)
-	cp -r $(CURDIR)/luasrc/* $(PKG_BUILD_DIR)/luasrc/ 2>/dev/null || true
-	cp -r $(CURDIR)/root/* $(PKG_BUILD_DIR)/root/ 2>/dev/null || true
-	cp -r $(CURDIR)/files/* $(PKG_BUILD_DIR)/files/ 2>/dev/null || true
+	cp -r $(CURDIR)/luasrc $(PKG_BUILD_DIR)/
+	cp -r $(CURDIR)/root $(PKG_BUILD_DIR)/
+	cp -r $(CURDIR)/files $(PKG_BUILD_DIR)/
 endef
 
 define Build/Configure
@@ -41,10 +41,13 @@ define Build/Compile
 endef
 
 define Package/luci-app-modemserver/install
-	cp -r $(PKG_BUILD_DIR)/luasrc/usr/lib/lua/luci/* $(1)/usr/lib/lua/luci/
-	cp -r $(PKG_BUILD_DIR)/root/etc/* $(1)/etc/
-	cp -r $(PKG_BUILD_DIR)/root/usr/* $(1)/usr/
-	cp -r $(PKG_BUILD_DIR)/files/* $(1)/
+	# LuCI controller / model / view
+	cp -r $(PKG_BUILD_DIR)/luasrc/usr/lib/lua/luci $(1)/usr/lib/lua/
+	# init.d / hotplug / config
+	cp -r $(PKG_BUILD_DIR)/root/etc $(1)/
+	# bin scripts
+	cp -r $(PKG_BUILD_DIR)/files/usr $(1)/
+	# set executable
 	chmod 0755 $(1)/usr/bin/modemserver
 	chmod 0755 $(1)/usr/bin/quectel-CM-M
 	chmod 0755 $(1)/usr/bin/sendat
