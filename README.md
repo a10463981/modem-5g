@@ -22,9 +22,12 @@
 ### 方式一：GitHub 克隆安装
 
 ```bash
-git clone https://github.com/a10463981/modem-5g.git /tmp/modem-5g
-cd /tmp/modem-5g
-chmod +x install.sh && ./install.sh
+cd /tmp
+mkdir -p modem-5g && cd modem-5g
+unzip -o ../modem-5g-v1.1.3.zip
+chmod +x install.sh
+sed -i 's/\r$//' install.sh uninstall.sh 2>/dev/null
+./install.sh
 ```
 
 ### 方式二：文件ipk 安装
