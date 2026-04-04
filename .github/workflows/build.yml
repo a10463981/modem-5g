@@ -30,7 +30,7 @@ jobs:
       - name: Prepare
         run: |
           SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
-          cp -r --exclude='.git' "${{ github.workspace }}/." "$SDK_DIR/package/luci-app-modemserver/"
+          rsync -av --exclude='.git' "${{ github.workspace }}/" "$SDK_DIR/package/luci-app-modemserver/"
           cd "$SDK_DIR"
           make defconfig 2>/dev/null || true
           ./scripts/feeds update -a 2>&1 | tail -3
@@ -79,7 +79,7 @@ jobs:
       - name: Prepare
         run: |
           SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
-          cp -r --exclude='.git' "${{ github.workspace }}/." "$SDK_DIR/package/luci-app-modemserver/"
+          rsync -av --exclude='.git' "${{ github.workspace }}/" "$SDK_DIR/package/luci-app-modemserver/"
           cd "$SDK_DIR"
           make defconfig 2>/dev/null || true
           ./scripts/feeds update -a 2>&1 | tail -3
@@ -127,7 +127,7 @@ jobs:
       - name: Prepare
         run: |
           SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
-          cp -r --exclude='.git' "${{ github.workspace }}/." "$SDK_DIR/package/luci-app-modemserver/"
+          rsync -av --exclude='.git' "${{ github.workspace }}/" "$SDK_DIR/package/luci-app-modemserver/"
           cd "$SDK_DIR"
           make defconfig 2>/dev/null || true
           ./scripts/feeds update -a 2>&1 | tail -3
@@ -181,7 +181,7 @@ jobs:
       - name: Build aarch64
         run: |
           SDK_DIR=$(ls -d /opt/sdk-aarch64/*/ | head -1)
-          cp -r --exclude='.git' "${{ github.workspace }}/." "$SDK_DIR/package/luci-app-modemserver/"
+          rsync -av --exclude='.git' "${{ github.workspace }}/" "$SDK_DIR/package/luci-app-modemserver/"
           cd "$SDK_DIR"
           make defconfig 2>/dev/null || true
           ./scripts/feeds update -a 2>&1 | tail -3
@@ -193,7 +193,7 @@ jobs:
       - name: Build x86_64
         run: |
           SDK_DIR=$(ls -d /opt/sdk-x86_64/*/ | head -1)
-          cp -r --exclude='.git' "${{ github.workspace }}/." "$SDK_DIR/package/luci-app-modemserver/"
+          rsync -av --exclude='.git' "${{ github.workspace }}/" "$SDK_DIR/package/luci-app-modemserver/"
           cd "$SDK_DIR"
           make defconfig 2>/dev/null || true
           ./scripts/feeds update -a 2>&1 | tail -3
@@ -205,7 +205,7 @@ jobs:
       - name: Build armv7
         run: |
           SDK_DIR=$(ls -d /opt/sdk-armv7/*/ | head -1)
-          cp -r --exclude='.git' "${{ github.workspace }}/." "$SDK_DIR/package/luci-app-modemserver/"
+          rsync -av --exclude='.git' "${{ github.workspace }}/" "$SDK_DIR/package/luci-app-modemserver/"
           cd "$SDK_DIR"
           make defconfig 2>/dev/null || true
           ./scripts/feeds update -a 2>&1 | tail -3
@@ -220,7 +220,7 @@ jobs:
           PKG_DIR="$SDK_DIR/package/luci-app-modemserver"
 
           # Copy workspace files
-          cp -r --exclude='.git' "${{ github.workspace }}/." "$PKG_DIR/"
+          rsync -av --exclude='.git' "${{ github.workspace }}/" "$PKG_DIR/"
 
           # Extract binaries from each arch ipk and place in files/usr/bin/
           mkdir -p "$PKG_DIR/files/usr/bin"
