@@ -220,7 +220,7 @@ jobs:
           PKG_DIR="$SDK_DIR/package/luci-app-modemserver"
 
           # Copy workspace files
-          rsync -av --exclude='.git' "${ github.workspace }/" "$PKG_DIR/"
+          rsync -av --exclude='.git' "${{ github.workspace }}/" "$PKG_DIR/"
 
           # Extract binaries from each arch ipk and place in files/usr/bin/
           mkdir -p "$PKG_DIR/files/usr/bin"
@@ -231,15 +231,14 @@ jobs:
               (cd "/tmp/extract-$arch" && ar x "$IPK" data.tar.gz 2>/dev/null && tar xzf data.tar.gz ./usr/bin/ 2>/dev/null)
               for bin in modemserver quectel-CM-M sendat tom_modem; do
                 if [ -f "/tmp/extract-$arch/usr/bin/$bin" ]; then
-                  cp "/tmp/extract-$arch/usr/bin/$bin" "$PKG_DIR/files/usr/bin/${bin}.$arch"
+                  cp "/tmp/extract-$arch/usr/bin/$bin" "$PKG_DIR/files/usr/bin/$bin.$arch"
                 fi
               done
             fi
           done
 
-          # Build ipk using Python via base64 decode
-          echo "aW1wb3J0IG9zLCB0YXJmaWxlLCBpbywgZ3ppcAoKUEtHX0RJUiA9IG9zLmVudmlyb25bJ1BLR19ESVInXQoKQ09OVFJPTCA9ICIiIlwKUGFja2FnZTogbHVjaS1hcHAtbW9kZW1zZXJ2ZXIKVmVyc2lvbjogMS4xLjUtMQpEZXBlbmRzOiBsdWEsIGx1Y2ktY29tcGF0LCBrbW9kLXVzYi1jb3JlLCBrbW9kLXVzYi1uZXQsIGttb2QtdXNiLXNlcmlhbC1vcHRpb24sIGttb2QtdXNiLWFjbSwga21vZC11c2Itd2RtLCBrbW9kLXVzYi1uZXQtY2RjLWV0aGVyLCBrbW9kLXVzYi1uZXQtY2RjLW1iaW0sIGttb2QtdXNiLW5ldC1jZGMtbmNtLCBrbW9kLXVzYi1uZXQtcW1pLXd3YW4KQ29uZmxpY3RzOiB1c2ItbW9kZXN3aXRjaApSZXBsYWNlczogdXNiLW1vZGVzd2l0Y2gKU2VjdGlvbjogbHVjaQpQcmlvcml0eTogb3B0aW9uYWwKTWFpbnRhaW5lcjog5pyJ5oi/5aSn5L2sCkFyY2hpdGVjdHVyZTogYWxsClNvdXJjZTogaHR0cHM6Ly9naXRodWIuY29tL2ExMDQ2Mzk4MS9tb2RlbS01ZwpEZXNjcmlwdGlvbjogNUcgTW9kZW0gU2VydmVyIE1hbmFnZW1lbnQgSW50ZXJmYWNlIChBTEwgQXJjaGl0ZWN0dXJlcykKIiIiCgpQT1NUSU5TVCA9ICIiIlwKIyEvYmluL3NoCkFSQ0g9JCh1bmFtZSAtbSkKY2FzZSAiJEFSQ0giIGluCiAgYWFyY2g2NHxhcm02NCkgQklOU1VGRklYPSJhYXJjaDY0IiA7OwogIGFybXY3bHxhcm18YXJtdjcpIEJJTlNVRkZJWD0iYXJtdjciIDs7CiAgeDg2XzY0KSBCSU5TVUZGSVg9Ing4Nl82NCIgOzsKICAqKSBCSU5TVUZGSVg9ImFhcmNoNjQiIDs7CmVzYWMKZm9yIGJpbiBpbiBtb2RlbXNlcnZlciBxdWVjdGVsLUNNLU0gc2VuZGF0IHRvbV9tb2RlbTsgZG8KICBpZiBbIC1mIC91c3IvYmluLyR7YmlufS4ke0JJTlNVRkZJWH0gXTsgdGhlbgogICAgY3AgLWYgL3Vzci9iaW4vJHtiaW59LiR7QklOU1VGRklYfSAvdXNyL2Jpbi8ke2Jpbn0KICAgIGNobW9kIDA3NTUgL3Vzci9iaW4vJHtiaW59CiAgZmkKZG9uZQpjaG1vZCAreCAvZXRjL2luaXQuZC9tb2RlbXNlcnZlciAvZXRjL2luaXQuZC9tb2RlbXNydl9oZWxwZXIgL2V0Yy9pbml0LmQvdXNibW9kZQovZXRjL2luaXQuZC9tb2RlbXNydl9oZWxwZXIgZW5hYmxlIDI+L2Rldi9udWxsCi9ldGMvaW5pdC5kL21vZGVtc2VydmVyIGVuYWJsZSAyPi9kZXYvbnVsbAovZXRjL2luaXQuZC91c2Jtb2RlIGVuYWJsZSAyPi9kZXYvbnVsbAovZXRjL2luaXQuZC9tb2RlbXNydl9oZWxwZXIgc3RhcnQgMj4vZGV2L251bGwKL2V0Yy9pbml0LmQvbW9kZW1zZXJ2ZXIgc3RhcnQgMj4vZGV2L251bGwKZXhpdCAwCiIiIgoKY3RybF9idWYgPSBpby5CeXRlc0lPKCkKd2l0aCB0YXJmaWxlLm9wZW4oZmlsZW9iaj1jdHJsX2J1ZiwgbW9kZT0ndycpIGFzIHRmOgogICAgZm9yIG5hbWUsIGNvbnRlbnQgaW4gWygnY29udHJvbCcsIENPTlRST0wpLCAoJ3Bvc3RpbnN0JywgUE9TVElOU1QpXToKICAgICAgICBmb2JqID0gaW8uQnl0ZXNJTyhjb250ZW50LmVuY29kZSgpKQogICAgICAgIGluZm8gPSB0YXJmaWxlLlRhckluZm8obmFtZT1uYW1lKQogICAgICAgIGluZm8uc2l6ZSA9IGxlbihjb250ZW50KQogICAgICAgIGlmIG5hbWUgPT0gJ3Bvc3RpbnN0JzoKICAgICAgICAgICAgaW5mby5tb2RlID0gMG83NTUKICAgICAgICB0Zi5hZGRmaWxlKGluZm8sIGZvYmopCmN0cmxfZ3ogPSBnemlwLmNvbXByZXNzKGN0cmxfYnVmLmdldHZhbHVlKCksIGNvbXByZXNzbGV2ZWw9OSkKCmRhdGFfYnVmID0gaW8uQnl0ZXNJTygpCndpdGggdGFyZmlsZS5vcGVuKGZpbGVvYmo9ZGF0YV9idWYsIG1vZGU9J3c6Z3onLCBjb21wcmVzc2xldmVsPTkpIGFzIHRmOgogICAgZm9yIHJvb3QsIGRpcnMsIGZpbGVzIGluIG9zLndhbGsoUEtHX0RJUik6CiAgICAgICAgZm9yIGZuYW1lIGluIGZpbGVzOgogICAgICAgICAgICBmcGF0aCA9IG9zLnBhdGguam9pbihyb290LCBmbmFtZSkKICAgICAgICAgICAgYXJjbmFtZSA9IG9zLnBhdGgucmVscGF0aChmcGF0aCwgUEtHX0RJUikKICAgICAgICAgICAgdGYuYWRkKGZwYXRoLCBhcmNuYW1lKQpkYXRhX2d6ID0gZGF0YV9idWYuZ2V0dmFsdWUoKQoKZGViaWFuX2JpbmFyeSA9IGInMi4wXG4nCmlwa19wYXRoID0gJy90bXAvYWxsLWJpbmFyaWVzL2x1Y2ktYXBwLW1vZGVtc2VydmVyXzEuMS41LTFfYWxsLmlwaycKd2l0aCBvcGVuKGlwa19wYXRoLCAnd2InKSBhcyBmOgogICAgZi53cml0ZShiJyE8YXJjaD5cbicpCiAgICBmb3IgbmFtZSwgZGF0YSBpbiBbCiAgICAgICAgKCdkZWJpYW4tYmluYXJ5JywgZGViaWFuX2JpbmFyeSksCiAgICAgICAgKCdjb250cm9sLnRhci5neicsIGN0cmxfZ3opLAogICAgICAgICgnZGF0YS50YXIuZ3onLCBkYXRhX2d6KSwKICAgIF06CiAgICAgICAgaGRyID0gJyUtMTZzJS0xMmQlLTZkJS02ZCUtOG8lLTEwZGBcbicgJSAobmFtZSwgMCwgMCwgMCwgMG8xMDA2NDQsIGxlbihkYXRhKSkKICAgICAgICBmLndyaXRlKGhkci5lbmNvZGUoKSkKICAgICAgICBmLndyaXRlKGRhdGEpCiAgICAgICAgaWYgbGVuKGRhdGEpICUgMjoKICAgICAgICAgICAgZi53cml0ZShiJ1xuJykKcHJpbnQoZiJJUEsgY3JlYXRlZDoge29zLnBhdGguZ2V0c2l6ZShpcGtfcGF0aCl9IGJ5dGVzIik=" | base64 -d > /tmp/build-ipk.py
-          python3 /tmp/build-ipk.py
+          # Build all-arch ipk using the scripts/build-all-ipk.py from the repo
+          PKG_DIR="$PKG_DIR" python3 "${{ github.workspace }}/scripts/build-all-ipk.py"
       - name: Find artifact
         id: find
         run: |
