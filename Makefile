@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-modemserver
-PKG_VERSION:=1.0.0
-PKG_RELEASE:=4
+PKG_VERSION:=1.1.5
+PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0
 PKG_MAINTAINER:=有房大佬
 
@@ -28,13 +28,19 @@ define Package/luci-app-modemserver/description
  有房大佬出品 | 包含: modemserver, quectel-CM-M, sendat, tom_modem
 
  ============================================================
- 【安装必读】
- 本包文件 /etc/init.d/usbmode 和 /etc/usb-mode.json 与系统自带
- 的 usb-modeswitch 包冲突（内容不同，本包为 Quectel 5G 定制版）。
- 安装时必须加 --force-overwrite 参数，否则 opkg 会报文件冲突错误。
+ 【安装必读 — 必须执行以下两步】
+ 第一步（必选）：先卸载冲突的 usb-modeswitch
+   opkg remove usb-modeswitch --force-depends
 
- 正确安装命令：
+ 第二步（必选）：安装本插件，必须加 --force-overwrite
    opkg install /tmp/upload.ipk --force-overwrite
+
+ 完整安装命令（两行都要执行）：
+   opkg remove usb-modeswitch --force-depends
+   opkg install /tmp/upload.ipk --force-overwrite
+
+ 原因：本包文件 /etc/init.d/usbmode 和 /etc/usb-mode.json 与系统自带
+ 的 usb-modeswitch 包冲突（内容不同，本包为 Quectel 5G 定制版）。
 
  卸载命令：
    opkg remove luci-app-modemserver

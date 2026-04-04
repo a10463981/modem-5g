@@ -1,7 +1,7 @@
 # 5G模组全能管理插件（modem-5g）
 # luci-app-modemserver
 
-**有房大佬出品** | **AAYY兄 整理提供** | 仅供测试研究
+**有房大佬出品** | **AAYY兄 整理提供** | **v1.1.5** | 仅供测试研究
 
 [English](README_EN.md) | [中文](README.md)
 
@@ -15,14 +15,33 @@
 
 ---
 
-## ⚠️ 安装必读 — 必须加 --force-overwrite
+## ⚠️ 安装必读 — 必须按顺序执行以下命令
 
 本插件的 `/etc/init.d/usbmode` 和 `/etc/usb-mode.json` 与系统 `usb-modeswitch` 包存在文件冲突（本包为 Quectel 5G 定制版，内容与系统通用版不同）。
 
-**安装命令：**
+**必须先执行第一步卸载冲突包，再执行第二步安装：**
+
 ```bash
+# 【第一步】先卸载冲突的 usb-modeswitch（必须）
+opkg remove usb-modeswitch --force-depends
+
+# 【第二步】安装本插件，必须加 --force-overwrite（必须）
 opkg install /tmp/upload.ipk --force-overwrite
 ```
+
+> ⚠️ 两步都要执行，缺一不可！仅执行第二步会报错 "usb-modeswitch * conflict"。
+
+## 📥 下载说明 — 选择对应架构版本
+
+| 文件名 | 架构 | 适用情况 |
+|--------|------|---------|
+| `luci-app-modemserver_1.1.5_all-all.ipk` | **ALL（全架构通用）** | ✅ **不知道选哪个就下载这个**，支持 aarch64 / x86_64 / armv7，安装时自动判断 |
+| `luci-app-modemserver_1.1.5_aarch64_cortex-a53.ipk` | ARM64 | iStoreOS、ImmortalWrt ARM64 路由器 |
+| `luci-app-modemserver_1.1.5_x86_64.ipk` | x86_64 | x86 软路由 |
+| `luci-app-modemserver_1.1.5_arm_cortex-a15_neon-vfpv4.ipk` | ARMv7 | 32位 ARM 路由器（此架构不推荐） |
+
+> 💡 普通用户推荐下载 `all-all.ipk`，一个文件支持所有架构，安装时自动匹配。
+
 **卸载命令：**
 ```bash
 opkg remove luci-app-modemserver
