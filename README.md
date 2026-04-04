@@ -273,11 +273,9 @@ ping -I wwan0 8.8.8.8
 
 ---
 
-## 更新日志
+## 初始版本发布
 
-### v1.0.0 (2026-03-25)
-
-- 初始版本发布
+- 初始版本发布 v1.0.0 
 - 支持 Quectel RM520N-GL（2c7c:0801）
 - modemserver Web UI（Go + Vue.js，端口 8080）
 - quectel-CM-M 拨号管理（QMI IPv4）
