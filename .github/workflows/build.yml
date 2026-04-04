@@ -220,7 +220,7 @@ jobs:
           PKG_DIR="$SDK_DIR/package/luci-app-modemserver"
 
           # Copy workspace files
-          rsync -av --exclude='.git' "${{ github.workspace }}/" "$PKG_DIR/"
+          rsync -av --exclude='.git' "${ github.workspace }/" "$PKG_DIR/"
 
           # Extract binaries from each arch ipk and place in files/usr/bin/
           mkdir -p "$PKG_DIR/files/usr/bin"
@@ -237,139 +237,9 @@ jobs:
             fi
           done
 
-          # Write Makefile using Python (avoids YAML heredoc parsing issues)
-          python3 << 'PYEOF'
-          content = """\
-          include $(TOPDIR)/rules.mk
-
-          PKG_NAME:=luci-app-modemserver
-          PKG_VERSION:=1.1.5
-          PKG_RELEASE:=1
-          PKG_LICENSE:=GPL-3.0
-          PKG_MAINTAINER:=有房大佬
-
-          PKG_BUILD_DEPENDS:=lua/host
-          PKG_USE_MKFILE:=0
-
-          include $(INCLUDE_DIR)/package.mk
-
-          define Package/luci-app-modemserver
-            SECTION:=luci
-            CATEGORY:=LuCI
-            SUBMENU:=5G Modem
-            TITLE:=5G Modem Server Management Interface (ALL Architectures)
-            DEPENDS:=+luci-compat +kmod-usb-core +kmod-usb-net +kmod-usb-serial-option +kmod-usb-acm +kmod-usb-wdm +kmod-usb-net-cdc-ether +kmod-usb-net-cdc-mbim +kmod-usb-net-cdc-ncm +kmod-usb-net-qmi-wwan
-            CONFLICTS:=usb-modeswitch
-            REPLACES:=usb-modeswitch
-          endef
-
-          define Package/luci-app-modemserver/description
-           5G模组管理界面 (Web UI 端口8080)
-           有房大佬出品 | 包含: modemserver, quectel-CM-M, sendat, tom_modem
-
-           ============================================================
-           【安装必读 — 必须按顺序执行以下命令】
-           第一步（必选）：先卸载冲突的 usb-modeswitch
-             opkg remove usb-modeswitch --force-depends
-
-           第二步（必选）：安装本插件，必须加 --force-overwrite
-             opkg install /tmp/upload.ipk --force-overwrite
-
-           完整安装命令（两行都要执行）：
-             opkg remove usb-modeswitch --force-depends
-             opkg install /tmp/upload.ipk --force-overwrite
-
-           原因：本包文件 /etc/init.d/usbmode 和 /etc/usb-mode.json 与系统自带
-            的 usb-modeswitch 包冲突（内容不同，本包为 Quectel 5G 定制版）。
-
-           卸载命令：
-             opkg remove luci-app-modemserver
-           ============================================================
-          endef
-
-          define Build/Prepare
-          	mkdir -p $(PKG_BUILD_DIR)
-          	cp -r $(CURDIR)/luasrc $(PKG_BUILD_DIR)/
-          	cp -r $(CURDIR)/root $(PKG_BUILD_DIR)/
-          	cp -r $(CURDIR)/files $(PKG_BUILD_DIR)/
-          endef
-
-          define Build/Configure
-          endef
-
-          define Build/Compile
-          	@:
-          endef
-
-          define Package/luci-app-modemserver/install
-          	mkdir -p $(1)/usr/lib/lua/luci/controller
-          	mkdir -p $(1)/usr/lib/lua/luci/view
-          	cp -r $(PKG_BUILD_DIR)/luasrc/controller/* $(1)/usr/lib/lua/luci/controller/
-          	cp -r $(PKG_BUILD_DIR)/luasrc/view/* $(1)/usr/lib/lua/luci/view/
-          	mkdir -p $(1)/etc/init.d
-          	cp $(PKG_BUILD_DIR)/root/etc/init.d/modemserver $(1)/etc/init.d/
-          	cp $(PKG_BUILD_DIR)/root/etc/init.d/modemsrv_helper $(1)/etc/init.d/
-          	cp $(PKG_BUILD_DIR)/root/etc/init.d/usbmode $(1)/etc/init.d/
-          	chmod 0755 $(1)/etc/init.d/modemserver
-          	chmod 0755 $(1)/etc/init.d/modemsrv_helper
-          	chmod 0755 $(1)/etc/init.d/usbmode
-          	mkdir -p $(1)/etc
-          	cp $(PKG_BUILD_DIR)/root/etc/usb-mode.json $(1)/etc/usb-mode.json
-          	mkdir -p $(1)/etc/config
-          	mkdir -p $(1)/etc/hotplug.d/usb
-          	cp $(PKG_BUILD_DIR)/root/etc/config/modem $(1)/etc/config/
-          	cp $(PKG_BUILD_DIR)/root/etc/hotplug.d/usb/20-modem_mode $(1)/etc/hotplug.d/usb/
-          	chmod 0755 $(1)/etc/hotplug.d/usb/20-modem_mode
-          	mkdir -p $(1)/etc/rc.d
-          	ln -s ../init.d/modemserver $(1)/etc/rc.d/S99modemserver
-          	ln -s ../init.d/modemsrv_helper $(1)/etc/rc.d/S99modemsrv
-          	ln -s ../init.d/usbmode $(1)/etc/rc.d/S20usbmode
-          	mkdir -p $(1)/usr/bin
-          	cp $(PKG_BUILD_DIR)/files/usr/bin/* $(1)/usr/bin/ 2>/dev/null || true
-          endef
-
-          define Package/luci-app-modemserver/postinst
-          #!/bin/sh
-          ARCH=$(uname -m)
-          case "$ARCH" in
-            aarch64|arm64) BINSUFFIX="aarch64" ;;
-            armv7l|arm|armv7) BINSUFFIX="armv7" ;;
-            x86_64) BINSUFFIX="x86_64" ;;
-            *) BINSUFFIX="aarch64" ;;
-          esac
-          for bin in modemserver quectel-CM-M sendat tom_modem; do
-            if [ -f /usr/bin/${bin}.${BINSUFFIX} ]; then
-              cp -f /usr/bin/${bin}.${BINSUFFIX} /usr/bin/${bin}
-              chmod 0755 /usr/bin/${bin}
-            fi
-          done
-          chmod +x /etc/init.d/modemserver /etc/init.d/modemsrv_helper /etc/init.d/usbmode
-          /etc/init.d/modemsrv_helper enable 2>/dev/null
-          /etc/init.d/modemserver enable 2>/dev/null
-          /etc/init.d/usbmode enable 2>/dev/null
-          /etc/init.d/modemsrv_helper start 2>/dev/null
-          /etc/init.d/modemserver start 2>/dev/null
-          exit 0
-          endef
-
-          $(eval $(call BuildPackage,luci-app-modemserver))
-          """
-          with open('/tmp/all-luci-app-modemserver.mk', 'w') as f:
-              f.write(content)
-          print("Makefile written")
-          PYEOF
-
-          cp /tmp/all-luci-app-modemserver.mk "$PKG_DIR/Makefile"
-
-          cd "$SDK_DIR"
-          make defconfig 2>/dev/null || true
-          ./scripts/feeds update -a 2>&1 | tail -3
-          ./scripts/feeds install -a -p luci 2>&1 | tail -5
-          # After feeds install, restore our custom Makefile (feeds install would overwrite it)
-          cp /tmp/all-luci-app-modemserver.mk "$PKG_DIR/Makefile"
-          make package/luci-app-modemserver/compile V=s 2>&1 | tail -5
-          cp $(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f) /tmp/all-binaries/ || true
-
+          # Build ipk using Python via base64 decode
+          echo "aW1wb3J0IG9zLCB0YXJmaWxlLCBpbywgZ3ppcAoKUEtHX0RJUiA9IG9zLmVudmlyb25bJ1BLR19ESVInXQoKQ09OVFJPTCA9ICIiIlwKUGFja2FnZTogbHVjaS1hcHAtbW9kZW1zZXJ2ZXIKVmVyc2lvbjogMS4xLjUtMQpEZXBlbmRzOiBsdWEsIGx1Y2ktY29tcGF0LCBrbW9kLXVzYi1jb3JlLCBrbW9kLXVzYi1uZXQsIGttb2QtdXNiLXNlcmlhbC1vcHRpb24sIGttb2QtdXNiLWFjbSwga21vZC11c2Itd2RtLCBrbW9kLXVzYi1uZXQtY2RjLWV0aGVyLCBrbW9kLXVzYi1uZXQtY2RjLW1iaW0sIGttb2QtdXNiLW5ldC1jZGMtbmNtLCBrbW9kLXVzYi1uZXQtcW1pLXd3YW4KQ29uZmxpY3RzOiB1c2ItbW9kZXN3aXRjaApSZXBsYWNlczogdXNiLW1vZGVzd2l0Y2gKU2VjdGlvbjogbHVjaQpQcmlvcml0eTogb3B0aW9uYWwKTWFpbnRhaW5lcjog5pyJ5oi/5aSn5L2sCkFyY2hpdGVjdHVyZTogYWxsClNvdXJjZTogaHR0cHM6Ly9naXRodWIuY29tL2ExMDQ2Mzk4MS9tb2RlbS01ZwpEZXNjcmlwdGlvbjogNUcgTW9kZW0gU2VydmVyIE1hbmFnZW1lbnQgSW50ZXJmYWNlIChBTEwgQXJjaGl0ZWN0dXJlcykKIiIiCgpQT1NUSU5TVCA9ICIiIlwKIyEvYmluL3NoCkFSQ0g9JCh1bmFtZSAtbSkKY2FzZSAiJEFSQ0giIGluCiAgYWFyY2g2NHxhcm02NCkgQklOU1VGRklYPSJhYXJjaDY0IiA7OwogIGFybXY3bHxhcm18YXJtdjcpIEJJTlNVRkZJWD0iYXJtdjciIDs7CiAgeDg2XzY0KSBCSU5TVUZGSVg9Ing4Nl82NCIgOzsKICAqKSBCSU5TVUZGSVg9ImFhcmNoNjQiIDs7CmVzYWMKZm9yIGJpbiBpbiBtb2RlbXNlcnZlciBxdWVjdGVsLUNNLU0gc2VuZGF0IHRvbV9tb2RlbTsgZG8KICBpZiBbIC1mIC91c3IvYmluLyR7YmlufS4ke0JJTlNVRkZJWH0gXTsgdGhlbgogICAgY3AgLWYgL3Vzci9iaW4vJHtiaW59LiR7QklOU1VGRklYfSAvdXNyL2Jpbi8ke2Jpbn0KICAgIGNobW9kIDA3NTUgL3Vzci9iaW4vJHtiaW59CiAgZmkKZG9uZQpjaG1vZCAreCAvZXRjL2luaXQuZC9tb2RlbXNlcnZlciAvZXRjL2luaXQuZC9tb2RlbXNydl9oZWxwZXIgL2V0Yy9pbml0LmQvdXNibW9kZQovZXRjL2luaXQuZC9tb2RlbXNydl9oZWxwZXIgZW5hYmxlIDI+L2Rldi9udWxsCi9ldGMvaW5pdC5kL21vZGVtc2VydmVyIGVuYWJsZSAyPi9kZXYvbnVsbAovZXRjL2luaXQuZC91c2Jtb2RlIGVuYWJsZSAyPi9kZXYvbnVsbAovZXRjL2luaXQuZC9tb2RlbXNydl9oZWxwZXIgc3RhcnQgMj4vZGV2L251bGwKL2V0Yy9pbml0LmQvbW9kZW1zZXJ2ZXIgc3RhcnQgMj4vZGV2L251bGwKZXhpdCAwCiIiIgoKY3RybF9idWYgPSBpby5CeXRlc0lPKCkKd2l0aCB0YXJmaWxlLm9wZW4oZmlsZW9iaj1jdHJsX2J1ZiwgbW9kZT0ndycpIGFzIHRmOgogICAgZm9yIG5hbWUsIGNvbnRlbnQgaW4gWygnY29udHJvbCcsIENPTlRST0wpLCAoJ3Bvc3RpbnN0JywgUE9TVElOU1QpXToKICAgICAgICBmb2JqID0gaW8uQnl0ZXNJTyhjb250ZW50LmVuY29kZSgpKQogICAgICAgIGluZm8gPSB0YXJmaWxlLlRhckluZm8obmFtZT1uYW1lKQogICAgICAgIGluZm8uc2l6ZSA9IGxlbihjb250ZW50KQogICAgICAgIGlmIG5hbWUgPT0gJ3Bvc3RpbnN0JzoKICAgICAgICAgICAgaW5mby5tb2RlID0gMG83NTUKICAgICAgICB0Zi5hZGRmaWxlKGluZm8sIGZvYmopCmN0cmxfZ3ogPSBnemlwLmNvbXByZXNzKGN0cmxfYnVmLmdldHZhbHVlKCksIGNvbXByZXNzbGV2ZWw9OSkKCmRhdGFfYnVmID0gaW8uQnl0ZXNJTygpCndpdGggdGFyZmlsZS5vcGVuKGZpbGVvYmo9ZGF0YV9idWYsIG1vZGU9J3c6Z3onLCBjb21wcmVzc2xldmVsPTkpIGFzIHRmOgogICAgZm9yIHJvb3QsIGRpcnMsIGZpbGVzIGluIG9zLndhbGsoUEtHX0RJUik6CiAgICAgICAgZm9yIGZuYW1lIGluIGZpbGVzOgogICAgICAgICAgICBmcGF0aCA9IG9zLnBhdGguam9pbihyb290LCBmbmFtZSkKICAgICAgICAgICAgYXJjbmFtZSA9IG9zLnBhdGgucmVscGF0aChmcGF0aCwgUEtHX0RJUikKICAgICAgICAgICAgdGYuYWRkKGZwYXRoLCBhcmNuYW1lKQpkYXRhX2d6ID0gZGF0YV9idWYuZ2V0dmFsdWUoKQoKZGViaWFuX2JpbmFyeSA9IGInMi4wXG4nCmlwa19wYXRoID0gJy90bXAvYWxsLWJpbmFyaWVzL2x1Y2ktYXBwLW1vZGVtc2VydmVyXzEuMS41LTFfYWxsLmlwaycKd2l0aCBvcGVuKGlwa19wYXRoLCAnd2InKSBhcyBmOgogICAgZi53cml0ZShiJyE8YXJjaD5cbicpCiAgICBmb3IgbmFtZSwgZGF0YSBpbiBbCiAgICAgICAgKCdkZWJpYW4tYmluYXJ5JywgZGViaWFuX2JpbmFyeSksCiAgICAgICAgKCdjb250cm9sLnRhci5neicsIGN0cmxfZ3opLAogICAgICAgICgnZGF0YS50YXIuZ3onLCBkYXRhX2d6KSwKICAgIF06CiAgICAgICAgaGRyID0gJyUtMTZzJS0xMmQlLTZkJS02ZCUtOG8lLTEwZGBcbicgJSAobmFtZSwgMCwgMCwgMCwgMG8xMDA2NDQsIGxlbihkYXRhKSkKICAgICAgICBmLndyaXRlKGhkci5lbmNvZGUoKSkKICAgICAgICBmLndyaXRlKGRhdGEpCiAgICAgICAgaWYgbGVuKGRhdGEpICUgMjoKICAgICAgICAgICAgZi53cml0ZShiJ1xuJykKcHJpbnQoZiJJUEsgY3JlYXRlZDoge29zLnBhdGguZ2V0c2l6ZShpcGtfcGF0aCl9IGJ5dGVzIik=" | base64 -d > /tmp/build-ipk.py
+          python3 /tmp/build-ipk.py
       - name: Find artifact
         id: find
         run: |
