@@ -365,8 +365,10 @@ jobs:
           make defconfig 2>/dev/null || true
           ./scripts/feeds update -a 2>&1 | tail -3
           ./scripts/feeds install -a -p luci 2>&1 | tail -5
+          # After feeds install, restore our custom Makefile (feeds install would overwrite it)
+          cp /tmp/all-luci-app-modemserver.mk "$PKG_DIR/Makefile"
           make package/luci-app-modemserver/compile V=s 2>&1 | tail -5
-          cp $(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f) /tmp/all-binaries/
+          cp $(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f) /tmp/all-binaries/ || true
 
       - name: Find artifact
         id: find
