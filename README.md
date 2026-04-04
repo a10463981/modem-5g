@@ -13,13 +13,26 @@
 ## 图片展示
 <img width="1904" height="886" alt="截图" src="images/tu1.png" />
 
+
+
 ---
 
+## 安装方式
+
+### 方式一：GitHub 克隆安装
+
+```bash
+git clone https://github.com/a10463981/modem-5g.git /tmp/modem-5g
+cd /tmp/modem-5g
+chmod +x install.sh && ./install.sh
+```
+
+### 方式二：文件ipk 安装
 ## ⚠️ 安装必读 — 必须按顺序执行以下命令
 
-本插件的 `/etc/init.d/usbmode` 和 `/etc/usb-mode.json` 与系统 `usb-modeswitch` 包存在文件冲突（本包为 Quectel 5G 定制版，内容与系统通用版不同）。
+本插件的 `/etc/init.d/usbmode` 和 `/etc/usb-mode.json` 与新系统 `usb-modeswitch` 包存在文件冲突（本包为 5Gmoden模块定制版，usb-modeswitch内容与系统通用版不同）。
 
-**必须先执行第一步卸载冲突包，再执行第二步安装：**
+**因此必须先执行第一步卸载冲突包，再执行第二步覆盖安装：**
 
 ```bash
 # 【第一步】先卸载冲突的 usb-modeswitch（必须）
@@ -35,10 +48,10 @@ opkg install /tmp/upload.ipk --force-overwrite
 
 | 文件名 | 架构 | 适用情况 |
 |--------|------|---------|
-| `luci-app-modemserver_1.1.5_all-all.ipk` | **ALL（全架构通用）** | ✅ **不知道选哪个就下载这个**，支持 aarch64 / x86_64 / armv7，安装时自动判断 |
-| `luci-app-modemserver_1.1.5_aarch64_cortex-a53.ipk` | ARM64 | iStoreOS、ImmortalWrt ARM64 路由器 |
-| `luci-app-modemserver_1.1.5_x86_64.ipk` | x86_64 | x86 软路由 |
-| `luci-app-modemserver_1.1.5_arm_cortex-a15_neon-vfpv4.ipk` | ARMv7 | 32位 ARM 路由器（此架构不推荐） |
+| `luci-app-modemserver_1.*.*_all-all.ipk` | **ALL（全架构通用）** | ✅ **不知道选哪个就下载这个**，支持 aarch64 / x86_64 / armv7，安装时自动判断 |
+| `luci-app-modemserver_1.*.*_aarch64_cortex-a53.ipk` | ARM64 | iStoreOS、ImmortalWrt ARM64 路由器 |
+| `luci-app-modemserver_1.*.*_x86_64.ipk` | x86_64 | x86 软路由 |
+| `luci-app-modemserver_1.*.*_arm_cortex-a15_neon-vfpv4.ipk` | ARMv7 | 32位 ARM 路由器（此架构不推荐） |
 
 > 💡 普通用户推荐下载 `all-all.ipk`，一个文件支持所有架构，安装时自动匹配。
 
@@ -182,34 +195,6 @@ modem-5g/
 └─────────────────────────────────────────────────────┘
 ```
 
----
-
-## 安装方式
-
-### 方式一：直接下载安装包（推荐）
-
-下载 [modem-5g-v1.0.0.zip](modem-5g-v1.0.0.zip)，上传到路由器 `/tmp/`
-
-```bash
-cd /tmp
-unzip -o modem-5g-v1.0.0.zip
-cd modem-5g
-chmod +x install.sh
-sed -i 's/\r$//' install.sh uninstall.sh 2>/dev/null
-./install.sh
-```
-
-### 方式二：GitHub 克隆安装
-
-```bash
-git clone https://github.com/a10463981/modem-5g.git /tmp/modem-5g
-cd /tmp/modem-5g
-chmod +x install.sh && ./install.sh
-```
-
----
-
-## 使用说明
 
 ### Web 管理界面
 
