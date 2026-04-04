@@ -163,7 +163,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq build-essential clang flex bison g++ gcc gawk \
             libncurses5-dev libssl-dev perl-base python3 python3-distutils python3-yaml \
-            rsync unzip wget xz-utils file bc 2>&1 | tail-3
+            rsync unzip wget xz-utils file bc 2>&1 | tail -3
 
       - name: Download SDKs
         run: |
@@ -178,205 +178,194 @@ jobs:
             -O /tmp/sdk-armv7.tar.xz
           tar xf /tmp/sdk-armv7.tar.xz -C /opt/sdk-armv7
 
-      - name: Build aarch64 binaries
+      - name: Build aarch64
         run: |
           SDK_DIR=$(ls -d /opt/sdk-aarch64/*/ | head -1)
           cp -r "${{ github.workspace }}/." "$SDK_DIR/package/luci-app-modemserver/"
           cd "$SDK_DIR"
           make defconfig 2>/dev/null || true
-          ./scripts/feeds update -a 2>&1 | tail-3
-          ./scripts/feeds install -a -p luci 2>&1 | tail-5
-          make package/luci-app-modemserver/compile V=s 2>&1 | tail-5
+          ./scripts/feeds update -a 2>&1 | tail -3
+          ./scripts/feeds install -a -p luci 2>&1 | tail -5
+          make package/luci-app-modemserver/compile V=s 2>&1 | tail -5
           mkdir -p /tmp/all-binaries/aarch64
           cp $(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f) /tmp/all-binaries/aarch64/
 
-      - name: Build x86_64 binaries
+      - name: Build x86_64
         run: |
           SDK_DIR=$(ls -d /opt/sdk-x86_64/*/ | head -1)
           cp -r "${{ github.workspace }}/." "$SDK_DIR/package/luci-app-modemserver/"
           cd "$SDK_DIR"
           make defconfig 2>/dev/null || true
-          ./scripts/feeds update -a 2>&1 | tail-3
-          ./scripts/feeds install -a -p luci 2>&1 | tail-5
-          make package/luci-app-modemserver/compile V=s 2>&1 | tail-5
+          ./scripts/feeds update -a 2>&1 | tail -3
+          ./scripts/feeds install -a -p luci 2>&1 | tail -5
+          make package/luci-app-modemserver/compile V=s 2>&1 | tail -5
           mkdir -p /tmp/all-binaries/x86_64
           cp $(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f) /tmp/all-binaries/x86_64/
 
-      - name: Build armv7 binaries
+      - name: Build armv7
         run: |
           SDK_DIR=$(ls -d /opt/sdk-armv7/*/ | head -1)
           cp -r "${{ github.workspace }}/." "$SDK_DIR/package/luci-app-modemserver/"
           cd "$SDK_DIR"
           make defconfig 2>/dev/null || true
-          ./scripts/feeds update -a 2>&1 | tail-3
-          ./scripts/feeds install -a -p luci 2>&1 | tail-5
-          make package/luci-app-modemserver/compile V=s 2>&1 | tail-5
+          ./scripts/feeds update -a 2>&1 | tail -3
+          ./scripts/feeds install -a -p luci 2>&1 | tail -5
+          make package/luci-app-modemserver/compile V=s 2>&1 | tail -5
           mkdir -p /tmp/all-binaries/armv7
           cp $(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f) /tmp/all-binaries/armv7/
 
       - name: Build ALL arch ipk
         run: |
-          # Build using aarch64 SDK as base, but replace binaries with arch-detect script
           SDK_DIR=$(ls -d /opt/sdk-aarch64/*/ | head -1)
-          cp -r "${{ github.workspace }}/." "$SDK_DIR/package/luci-app-modemserver/"
+          PKG_DIR="$SDK_DIR/package/luci-app-modemserver"
 
-          # Create arch-detect postinst script that swaps binaries at install time
-          mkdir -p "$SDK_DIR/package/luci-app-modemserver/files/usr/bin-all"
-          cp /tmp/all-binaries/aarch64/*.ipk "$SDK_DIR/package/luci-app-modemserver/files/usr/bin-all/" 2>/dev/null || true
+          # Copy workspace files
+          cp -r "${{ github.workspace }}/." "$PKG_DIR/"
 
-          # Create a special Makefile for ALL arch
-          cat > /tmp/all-luci-app-modemserver.mk << 'MAKEFILE_EOF'
-include $(TOPDIR)/rules.mk
-
-PKG_NAME:=luci-app-modemserver
-PKG_VERSION:=1.1.5
-PKG_RELEASE:=1
-PKG_LICENSE:=GPL-3.0
-PKG_MAINTAINER:=有房大佬
-
-PKG_BUILD_DEPENDS:=lua/host
-PKG_USE_MKFILE:=0
-
-include $(INCLUDE_DIR)/package.mk
-
-define Package/luci-app-modemserver
-  SECTION:=luci
-  CATEGORY:=LuCI
-  SUBMENU:=5G Modem
-  TITLE:=5G Modem Server Management Interface (ALL Architectures)
-  DEPENDS:=+luci-compat +kmod-usb-core +kmod-usb-net +kmod-usb-serial-option +kmod-usb-acm +kmod-usb-wdm +kmod-usb-net-cdc-ether +kmod-usb-net-cdc-mbim +kmod-usb-net-cdc-ncm +kmod-usb-net-qmi-wwan
-  CONFLICTS:=usb-modeswitch
-  REPLACES:=usb-modeswitch
-  ARCHIVE_TYPE:=ipk
-endef
-
-define Package/luci-app-modemserver/description
- 5G模组管理界面 (Web UI 端口8080)
- 有房大佬出品 | 包含: modemserver, quectel-CM-M, sendat, tom_modem
-
- ============================================================
- 【安装必读 — 必须按顺序执行以下命令】
- 第一步（必选）：先卸载冲突的 usb-modeswitch
-   opkg remove usb-modeswitch --force-depends
-
- 第二步（必选）：安装本插件，必须加 --force-overwrite
-   opkg install /tmp/upload.ipk --force-overwrite
-
- 完整安装命令（两行都要执行）：
-   opkg remove usb-modeswitch --force-depends
-   opkg install /tmp/upload.ipk --force-overwrite
-
- 原因：本包文件 /etc/init.d/usbmode 和 /etc/usb-mode.json 与系统自带
- 的 usb-modeswitch 包冲突（内容不同，本包为 Quectel 5G 定制版）。
-
- 卸载命令：
-   opkg remove luci-app-modemserver
- ============================================================
-endef
-
-define Build/Prepare
-	mkdir -p $(PKG_BUILD_DIR)
-	cp -r $(CURDIR)/luasrc $(PKG_BUILD_DIR)/
-	cp -r $(CURDIR)/root $(PKG_BUILD_DIR)/
-	cp -r $(CURDIR)/files $(PKG_BUILD_DIR)/
-endef
-
-define Build/Configure
-endef
-
-define Build/Compile
-	@:
-endef
-
-define Package/luci-app-modemserver/install
-	# LuCI controller / view
-	mkdir -p $(1)/usr/lib/lua/luci/controller
-	mkdir -p $(1)/usr/lib/lua/luci/view
-	cp -r $(PKG_BUILD_DIR)/luasrc/controller/* $(1)/usr/lib/lua/luci/controller/
-	cp -r $(PKG_BUILD_DIR)/luasrc/view/* $(1)/usr/lib/lua/luci/view/
-	# init.d scripts
-	mkdir -p $(1)/etc/init.d
-	cp $(PKG_BUILD_DIR)/root/etc/init.d/modemserver $(1)/etc/init.d/
-	cp $(PKG_BUILD_DIR)/root/etc/init.d/modemsrv_helper $(1)/etc/init.d/
-	cp $(PKG_BUILD_DIR)/root/etc/init.d/usbmode $(1)/etc/init.d/
-	chmod 0755 $(1)/etc/init.d/modemserver
-	chmod 0755 $(1)/etc/init.d/modemsrv_helper
-	chmod 0755 $(1)/etc/init.d/usbmode
-	# usb-mode.json
-	mkdir -p $(1)/etc
-	cp $(PKG_BUILD_DIR)/root/etc/usb-mode.json $(1)/etc/usb-mode.json
-	# config / hotplug.d
-	mkdir -p $(1)/etc/config
-	mkdir -p $(1)/etc/hotplug.d/usb
-	cp $(PKG_BUILD_DIR)/root/etc/config/modem $(1)/etc/config/
-	cp $(PKG_BUILD_DIR)/root/etc/hotplug.d/usb/20-modem_mode $(1)/etc/hotplug.d/usb/
-	chmod 0755 $(1)/etc/hotplug.d/usb/20-modem_mode
-	# rc.d symlinks
-	mkdir -p $(1)/etc/rc.d
-	ln -s ../init.d/modemserver $(1)/etc/rc.d/S99modemserver
-	ln -s ../init.d/modemsrv_helper $(1)/etc/rc.d/S99modemsrv
-	ln -s ../init.d/usbmode $(1)/etc/rc.d/S20usbmode
-	# bin scripts (placeholder - postinst will copy correct arch)
-	mkdir -p $(1)/usr/bin
-	# Arch-detect install helper
-	cp $(PKG_BUILD_DIR)/files/usr/bin/modemserver $(1)/usr/bin/modemserver.aarch64 2>/dev/null || true
-	cp $(PKG_BUILD_DIR)/files/usr/bin/quectel-CM-M $(1)/usr/bin/quectel-CM-M.aarch64 2>/dev/null || true
-	cp $(PKG_BUILD_DIR)/files/usr/bin/sendat $(1)/usr/bin/sendat.aarch64 2>/dev/null || true
-	cp $(PKG_BUILD_DIR)/files/usr/bin/tom_modem $(1)/usr/bin/tom_modem.aarch64 2>/dev/null || true
-endef
-
-define Package/luci-app-modemserver/postinst
-#!/bin/sh
-# Detect architecture and copy correct binaries
-ARCH=$(uname -m)
-case "$ARCH" in
-  aarch64|arm64) BINSUFFIX="aarch64" ;;
-  armv7l|arm|armv7) BINSUFFIX="armv7" ;;
-  x86_64) BINSUFFIX="x86_64" ;;
-  *) BINSUFFIX="aarch64" ;;
-esac
-for bin in modemserver quectel-CM-M sendat tom_modem; do
-  if [ -f /usr/bin/${bin}.${BINSUFFIX} ]; then
-    cp -f /usr/bin/${bin}.${BINSUFFIX} /usr/bin/${bin}
-    chmod 0755 /usr/bin/${bin}
-  fi
-done
-chmod +x /etc/init.d/modemserver /etc/init.d/modemsrv_helper /etc/init.d/usbmode
-/etc/init.d/modemsrv_helper enable 2>/dev/null
-/etc/init.d/modemserver enable 2>/dev/null
-/etc/init.d/usbmode enable 2>/dev/null
-/etc/init.d/modemsrv_helper start 2>/dev/null
-/etc/init.d/modemserver start 2>/dev/null
-exit 0
-endef
-
-$(eval $(call BuildPackage,luci-app-modemserver))
-MAKEFILE_EOF
-
-          # Use ALL arch Makefile
-          cp /tmp/all-luci-app-modemserver.mk "$SDK_DIR/package/luci-app-modemserver/Makefile"
-          # Copy all three arch compiled binaries to files/usr/bin
-          mkdir -p "$SDK_DIR/package/luci-app-modemserver/files/usr/bin"
+          # Extract binaries from each arch ipk and place in files/usr/bin/
+          mkdir -p "$PKG_DIR/files/usr/bin"
           for arch in aarch64 x86_64 armv7; do
             IPK=$(find /tmp/all-binaries/$arch -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null | head -1)
             if [ -n "$IPK" ] && [ -f "$IPK" ]; then
-              cd /tmp && rm -rf /tmp/extract-$arch && mkdir /tmp/extract-$arch
-              ar -p "$IPK" control.tar.gz 2>/dev/null | tar xzf - -C /tmp/extract-$arch ./data.tar.gz 2>/dev/null
-              if [ -f /tmp/extract-$arch/data.tar.gz ]; then
-                cd /tmp/extract-$arch && tar xzf data.tar.gz ./usr/bin/ 2>/dev/null
-                for bin in modemserver quectel-CM-M sendat tom_modem; do
-                  if [ -f /tmp/extract-$arch/usr/bin/$bin ]; then
-                    cp /tmp/extract-$arch/usr/bin/$bin "$SDK_DIR/package/luci-app-modemserver/files/usr/bin/${bin}.$arch"
-                  fi
-                done
-              fi
+              rm -rf "/tmp/extract-$arch" && mkdir "/tmp/extract-$arch"
+              (cd "/tmp/extract-$arch" && ar x "$IPK" data.tar.gz 2>/dev/null && tar xzf data.tar.gz ./usr/bin/ 2>/dev/null)
+              for bin in modemserver quectel-CM-M sendat tom_modem; do
+                if [ -f "/tmp/extract-$arch/usr/bin/$bin" ]; then
+                  cp "/tmp/extract-$arch/usr/bin/$bin" "$PKG_DIR/files/usr/bin/${bin}.$arch"
+                fi
+              done
             fi
           done
+
+          # Write Makefile using Python (avoids YAML heredoc parsing issues)
+          python3 << 'PYEOF'
+          content = """\
+          include $(TOPDIR)/rules.mk
+
+          PKG_NAME:=luci-app-modemserver
+          PKG_VERSION:=1.1.5
+          PKG_RELEASE:=1
+          PKG_LICENSE:=GPL-3.0
+          PKG_MAINTAINER:=有房大佬
+
+          PKG_BUILD_DEPENDS:=lua/host
+          PKG_USE_MKFILE:=0
+
+          include $(INCLUDE_DIR)/package.mk
+
+          define Package/luci-app-modemserver
+            SECTION:=luci
+            CATEGORY:=LuCI
+            SUBMENU:=5G Modem
+            TITLE:=5G Modem Server Management Interface (ALL Architectures)
+            DEPENDS:=+luci-compat +kmod-usb-core +kmod-usb-net +kmod-usb-serial-option +kmod-usb-acm +kmod-usb-wdm +kmod-usb-net-cdc-ether +kmod-usb-net-cdc-mbim +kmod-usb-net-cdc-ncm +kmod-usb-net-qmi-wwan
+            CONFLICTS:=usb-modeswitch
+            REPLACES:=usb-modeswitch
+          endef
+
+          define Package/luci-app-modemserver/description
+           5G模组管理界面 (Web UI 端口8080)
+           有房大佬出品 | 包含: modemserver, quectel-CM-M, sendat, tom_modem
+
+           ============================================================
+           【安装必读 — 必须按顺序执行以下命令】
+           第一步（必选）：先卸载冲突的 usb-modeswitch
+             opkg remove usb-modeswitch --force-depends
+
+           第二步（必选）：安装本插件，必须加 --force-overwrite
+             opkg install /tmp/upload.ipk --force-overwrite
+
+           完整安装命令（两行都要执行）：
+             opkg remove usb-modeswitch --force-depends
+             opkg install /tmp/upload.ipk --force-overwrite
+
+           原因：本包文件 /etc/init.d/usbmode 和 /etc/usb-mode.json 与系统自带
+            的 usb-modeswitch 包冲突（内容不同，本包为 Quectel 5G 定制版）。
+
+           卸载命令：
+             opkg remove luci-app-modemserver
+           ============================================================
+          endef
+
+          define Build/Prepare
+          	mkdir -p $(PKG_BUILD_DIR)
+          	cp -r $(CURDIR)/luasrc $(PKG_BUILD_DIR)/
+          	cp -r $(CURDIR)/root $(PKG_BUILD_DIR)/
+          	cp -r $(CURDIR)/files $(PKG_BUILD_DIR)/
+          endef
+
+          define Build/Configure
+          endef
+
+          define Build/Compile
+          	@:
+          endef
+
+          define Package/luci-app-modemserver/install
+          	mkdir -p $(1)/usr/lib/lua/luci/controller
+          	mkdir -p $(1)/usr/lib/lua/luci/view
+          	cp -r $(PKG_BUILD_DIR)/luasrc/controller/* $(1)/usr/lib/lua/luci/controller/
+          	cp -r $(PKG_BUILD_DIR)/luasrc/view/* $(1)/usr/lib/lua/luci/view/
+          	mkdir -p $(1)/etc/init.d
+          	cp $(PKG_BUILD_DIR)/root/etc/init.d/modemserver $(1)/etc/init.d/
+          	cp $(PKG_BUILD_DIR)/root/etc/init.d/modemsrv_helper $(1)/etc/init.d/
+          	cp $(PKG_BUILD_DIR)/root/etc/init.d/usbmode $(1)/etc/init.d/
+          	chmod 0755 $(1)/etc/init.d/modemserver
+          	chmod 0755 $(1)/etc/init.d/modemsrv_helper
+          	chmod 0755 $(1)/etc/init.d/usbmode
+          	mkdir -p $(1)/etc
+          	cp $(PKG_BUILD_DIR)/root/etc/usb-mode.json $(1)/etc/usb-mode.json
+          	mkdir -p $(1)/etc/config
+          	mkdir -p $(1)/etc/hotplug.d/usb
+          	cp $(PKG_BUILD_DIR)/root/etc/config/modem $(1)/etc/config/
+          	cp $(PKG_BUILD_DIR)/root/etc/hotplug.d/usb/20-modem_mode $(1)/etc/hotplug.d/usb/
+          	chmod 0755 $(1)/etc/hotplug.d/usb/20-modem_mode
+          	mkdir -p $(1)/etc/rc.d
+          	ln -s ../init.d/modemserver $(1)/etc/rc.d/S99modemserver
+          	ln -s ../init.d/modemsrv_helper $(1)/etc/rc.d/S99modemsrv
+          	ln -s ../init.d/usbmode $(1)/etc/rc.d/S20usbmode
+          	mkdir -p $(1)/usr/bin
+          	cp $(PKG_BUILD_DIR)/files/usr/bin/* $(1)/usr/bin/ 2>/dev/null || true
+          endef
+
+          define Package/luci-app-modemserver/postinst
+          #!/bin/sh
+          ARCH=$(uname -m)
+          case "$ARCH" in
+            aarch64|arm64) BINSUFFIX="aarch64" ;;
+            armv7l|arm|armv7) BINSUFFIX="armv7" ;;
+            x86_64) BINSUFFIX="x86_64" ;;
+            *) BINSUFFIX="aarch64" ;;
+          esac
+          for bin in modemserver quectel-CM-M sendat tom_modem; do
+            if [ -f /usr/bin/${bin}.${BINSUFFIX} ]; then
+              cp -f /usr/bin/${bin}.${BINSUFFIX} /usr/bin/${bin}
+              chmod 0755 /usr/bin/${bin}
+            fi
+          done
+          chmod +x /etc/init.d/modemserver /etc/init.d/modemsrv_helper /etc/init.d/usbmode
+          /etc/init.d/modemsrv_helper enable 2>/dev/null
+          /etc/init.d/modemserver enable 2>/dev/null
+          /etc/init.d/usbmode enable 2>/dev/null
+          /etc/init.d/modemsrv_helper start 2>/dev/null
+          /etc/init.d/modemserver start 2>/dev/null
+          exit 0
+          endef
+
+          $(eval $(call BuildPackage,luci-app-modemserver))
+          """
+          with open('/tmp/all-luci-app-modemserver.mk', 'w') as f:
+              f.write(content)
+          print("Makefile written")
+          PYEOF
+
+          cp /tmp/all-luci-app-modemserver.mk "$PKG_DIR/Makefile"
+
           cd "$SDK_DIR"
           make defconfig 2>/dev/null || true
-          ./scripts/feeds update -a 2>&1 | tail-3
-          ./scripts/feeds install -a -p luci 2>&1 | tail-5
-          make package/luci-app-modemserver/compile V=s 2>&1 | tail-5
+          ./scripts/feeds update -a 2>&1 | tail -3
+          ./scripts/feeds install -a -p luci 2>&1 | tail -5
+          make package/luci-app-modemserver/compile V=s 2>&1 | tail -5
           cp $(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f) /tmp/all-binaries/
 
       - name: Find artifact
