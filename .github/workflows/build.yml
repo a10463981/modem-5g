@@ -285,7 +285,7 @@ jobs:
           TAG="${{ github.event.release.tag_name }}"
           git clone --depth=1 https://github.com/${{ github.repository }}.git /tmp/repo
           cd /tmp/repo
-          find "$GITHUB_WORKSPACE/artifacts/" -name "*.ipk" -type f | while read f; do
+          find ./artifacts/ -name "*.ipk" -type f | while read f; do
             echo "Uploading: $f -> $TAG"
             gh release upload "$TAG" "$f" --clobber
           done
