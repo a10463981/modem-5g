@@ -12,21 +12,18 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-
       - name: Install deps
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq build-essential clang flex bison g++ gcc gawk \
             libncurses5-dev libssl-dev perl-base python3 python3-distutils python3-yaml \
             rsync unzip wget xz-utils file bc 2>&1 | tail -3
-
       - name: Download SDK
         run: |
           mkdir -p /opt/sdk
           wget -q "https://downloads.openwrt.org/releases/22.03.3/targets/armvirt/64/openwrt-sdk-22.03.3-armvirt-64_gcc-11.2.0_musl.Linux-x86_64.tar.xz" \
             -O /tmp/sdk-aarch64.tar.xz
           tar xf /tmp/sdk-aarch64.tar.xz -C /opt/sdk
-
       - name: Prepare
         run: |
           SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
@@ -35,20 +32,48 @@ jobs:
           make defconfig 2>/dev/null || true
           ./scripts/feeds update -a 2>&1 | tail -3
           ./scripts/feeds install -a -p luci 2>&1 | tail -5
-
       - name: Build
         run: |
           SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
           cd "$SDK_DIR"
           make package/luci-app-modemserver/compile V=s 2>&1 | tail -40
-
+      - name: Convert to ar format
+        run: |
+          SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
+          IPK=$(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null | head -1)
+          if [ -n "$IPK" ] && [ -f "$IPK" ]; then
+            python3 -c "
+import gzip, tarfile, io, os, sys
+ipk = sys.argv[1]
+out = ipk + '.tmp'
+with open(ipk,'rb') as f: td = gzip.decompress(f.read())
+tb = io.BytesIO(td)
+members = {}
+with tarfile.open(fileobj=tb) as tf:
+    for m in tf.getmembers():
+        f2 = tf.extractfile(m)
+        if f2: members[m.name] = f2.read()
+with open(out,'wb') as f:
+    f.write(b'!<arch>\n')
+    for name, data in [
+        ('debian-binary', b'2.0\n'),
+        ('control.tar.gz', members.get('./control.tar.gz', b'')),
+        ('data.tar.gz', members.get('./data.tar.gz', b'')),
+    ]:
+        hdr = '%-16s%-12d%-6d%-6d%-8o%-10d\`\n' % (name, 0, 0, 0, 0o100644, len(data))
+        f.write(hdr.encode())
+        f.write(data)
+        if len(data) % 2: f.write(b'\n')
+os.replace(out, ipk)
+print('Converted ar:', ipk)
+" "$IPK"
+          fi
       - name: Find artifact
         id: find
         run: |
           SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
           IPK=$(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null | head -1)
           echo "ipk=$IPK" >> $GITHUB_OUTPUT
-
       - name: Upload artifact
         if: steps.find.outputs.ipk != ''
         uses: actions/upload-artifact@v4
@@ -60,21 +85,18 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-
       - name: Install deps
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq build-essential clang flex bison g++ gcc gawk \
             libncurses5-dev libssl-dev perl-base python3 python3-distutils python3-yaml \
             rsync unzip wget xz-utils file bc 2>&1 | tail -3
-
       - name: Download SDK
         run: |
           mkdir -p /opt/sdk
           wget -q "https://downloads.openwrt.org/releases/22.03.3/targets/x86/64/openwrt-sdk-22.03.3-x86-64_gcc-11.2.0_musl.Linux-x86_64.tar.xz" \
             -O /tmp/sdk-x86_64.tar.xz
           tar xf /tmp/sdk-x86_64.tar.xz -C /opt/sdk
-
       - name: Prepare
         run: |
           SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
@@ -83,20 +105,48 @@ jobs:
           make defconfig 2>/dev/null || true
           ./scripts/feeds update -a 2>&1 | tail -3
           ./scripts/feeds install -a -p luci 2>&1 | tail -5
-
       - name: Build
         run: |
           SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
           cd "$SDK_DIR"
           make package/luci-app-modemserver/compile V=s 2>&1 | tail -40
-
+      - name: Convert to ar format
+        run: |
+          SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
+          IPK=$(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null | head -1)
+          if [ -n "$IPK" ] && [ -f "$IPK" ]; then
+            python3 -c "
+import gzip, tarfile, io, os, sys
+ipk = sys.argv[1]
+out = ipk + '.tmp'
+with open(ipk,'rb') as f: td = gzip.decompress(f.read())
+tb = io.BytesIO(td)
+members = {}
+with tarfile.open(fileobj=tb) as tf:
+    for m in tf.getmembers():
+        f2 = tf.extractfile(m)
+        if f2: members[m.name] = f2.read()
+with open(out,'wb') as f:
+    f.write(b'!<arch>\n')
+    for name, data in [
+        ('debian-binary', b'2.0\n'),
+        ('control.tar.gz', members.get('./control.tar.gz', b'')),
+        ('data.tar.gz', members.get('./data.tar.gz', b'')),
+    ]:
+        hdr = '%-16s%-12d%-6d%-6d%-8o%-10d\`\n' % (name, 0, 0, 0, 0o100644, len(data))
+        f.write(hdr.encode())
+        f.write(data)
+        if len(data) % 2: f.write(b'\n')
+os.replace(out, ipk)
+print('Converted ar:', ipk)
+" "$IPK"
+          fi
       - name: Find artifact
         id: find
         run: |
           SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
           IPK=$(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null | head -1)
           echo "ipk=$IPK" >> $GITHUB_OUTPUT
-
       - name: Upload artifact
         if: steps.find.outputs.ipk != ''
         uses: actions/upload-artifact@v4
@@ -108,21 +158,18 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-
       - name: Install deps
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq build-essential clang flex bison g++ gcc gawk \
             libncurses5-dev libssl-dev perl-base python3 python3-distutils python3-yaml \
             rsync unzip wget xz-utils file bc 2>&1 | tail -3
-
       - name: Download SDK
         run: |
           mkdir -p /opt/sdk
           wget -q "https://downloads.openwrt.org/releases/22.03.3/targets/armvirt/32/openwrt-sdk-22.03.3-armvirt-32_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz" \
             -O /tmp/sdk-armv7.tar.xz
           tar xf /tmp/sdk-armv7.tar.xz -C /opt/sdk
-
       - name: Prepare
         run: |
           SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
@@ -131,20 +178,48 @@ jobs:
           make defconfig 2>/dev/null || true
           ./scripts/feeds update -a 2>&1 | tail -3
           ./scripts/feeds install -a -p luci 2>&1 | tail -5
-
       - name: Build
         run: |
           SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
           cd "$SDK_DIR"
           make package/luci-app-modemserver/compile V=s 2>&1 | tail -40
-
+      - name: Convert to ar format
+        run: |
+          SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
+          IPK=$(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null | head -1)
+          if [ -n "$IPK" ] && [ -f "$IPK" ]; then
+            python3 -c "
+import gzip, tarfile, io, os, sys
+ipk = sys.argv[1]
+out = ipk + '.tmp'
+with open(ipk,'rb') as f: td = gzip.decompress(f.read())
+tb = io.BytesIO(td)
+members = {}
+with tarfile.open(fileobj=tb) as tf:
+    for m in tf.getmembers():
+        f2 = tf.extractfile(m)
+        if f2: members[m.name] = f2.read()
+with open(out,'wb') as f:
+    f.write(b'!<arch>\n')
+    for name, data in [
+        ('debian-binary', b'2.0\n'),
+        ('control.tar.gz', members.get('./control.tar.gz', b'')),
+        ('data.tar.gz', members.get('./data.tar.gz', b'')),
+    ]:
+        hdr = '%-16s%-12d%-6d%-6d%-8o%-10d\`\n' % (name, 0, 0, 0, 0o100644, len(data))
+        f.write(hdr.encode())
+        f.write(data)
+        if len(data) % 2: f.write(b'\n')
+os.replace(out, ipk)
+print('Converted ar:', ipk)
+" "$IPK"
+          fi
       - name: Find artifact
         id: find
         run: |
           SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
           IPK=$(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null | head -1)
           echo "ipk=$IPK" >> $GITHUB_OUTPUT
-
       - name: Upload artifact
         if: steps.find.outputs.ipk != ''
         uses: actions/upload-artifact@v4
@@ -153,31 +228,24 @@ jobs:
           path: ${{ steps.find.outputs.ipk }}
 
   build-all:
-    # Downloads 3 SDKs and builds 3 archs in parallel (no needs = runs immediately)
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-
       - name: Install deps
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq build-essential clang flex bison g++ gcc gawk \
             libncurses5-dev libssl-dev perl-base python3 python3-distutils python3-yaml \
             rsync unzip wget xz-utils file bc 2>&1 | tail -3
-
       - name: Download SDKs
         run: |
           mkdir -p /opt/sdk-aarch64 /opt/sdk-x86_64 /opt/sdk-armv7
-          wget -q "https://downloads.openwrt.org/releases/22.03.3/targets/armvirt/64/openwrt-sdk-22.03.3-armvirt-64_gcc-11.2.0_musl.Linux-x86_64.tar.xz" \
-            -O /tmp/sdk-aarch64.tar.xz
+          wget -q "https://downloads.openwrt.org/releases/22.03.3/targets/armvirt/64/openwrt-sdk-22.03.3-armvirt-64_gcc-11.2.0_musl.Linux-x86_64.tar.xz" -O /tmp/sdk-aarch64.tar.xz
           tar xf /tmp/sdk-aarch64.tar.xz -C /opt/sdk-aarch64
-          wget -q "https://downloads.openwrt.org/releases/22.03.3/targets/x86/64/openwrt-sdk-22.03.3-x86-64_gcc-11.2.0_musl.Linux-x86_64.tar.xz" \
-            -O /tmp/sdk-x86_64.tar.xz
+          wget -q "https://downloads.openwrt.org/releases/22.03.3/targets/x86/64/openwrt-sdk-22.03.3-x86-64_gcc-11.2.0_musl.Linux-x86_64.tar.xz" -O /tmp/sdk-x86_64.tar.xz
           tar xf /tmp/sdk-x86_64.tar.xz -C /opt/sdk-x86_64
-          wget -q "https://downloads.openwrt.org/releases/22.03.3/targets/armvirt/32/openwrt-sdk-22.03.3-armvirt-32_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz" \
-            -O /tmp/sdk-armv7.tar.xz
+          wget -q "https://downloads.openwrt.org/releases/22.03.3/targets/armvirt/32/openwrt-sdk-22.03.3-armvirt-32_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz" -O /tmp/sdk-armv7.tar.xz
           tar xf /tmp/sdk-armv7.tar.xz -C /opt/sdk-armv7
-
       - name: Build aarch64
         run: |
           SDK_DIR=$(ls -d /opt/sdk-aarch64/*/ | head -1)
@@ -188,8 +256,7 @@ jobs:
           ./scripts/feeds install -a -p luci 2>&1 | tail -5
           make package/luci-app-modemserver/compile V=s 2>&1 | tail -5
           mkdir -p /tmp/all-binaries/aarch64
-          cp $(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f) /tmp/all-binaries/aarch64/ 2>/dev/null || true
-
+          cp $(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null) /tmp/all-binaries/aarch64/ 2>/dev/null || true
       - name: Build x86_64
         run: |
           SDK_DIR=$(ls -d /opt/sdk-x86_64/*/ | head -1)
@@ -200,8 +267,7 @@ jobs:
           ./scripts/feeds install -a -p luci 2>&1 | tail -5
           make package/luci-app-modemserver/compile V=s 2>&1 | tail -5
           mkdir -p /tmp/all-binaries/x86_64
-          cp $(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f) /tmp/all-binaries/x86_64/ 2>/dev/null || true
-
+          cp $(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null) /tmp/all-binaries/x86_64/ 2>/dev/null || true
       - name: Build armv7
         run: |
           SDK_DIR=$(ls -d /opt/sdk-armv7/*/ | head -1)
@@ -212,29 +278,20 @@ jobs:
           ./scripts/feeds install -a -p luci 2>&1 | tail -5
           make package/luci-app-modemserver/compile V=s 2>&1 | tail -5
           mkdir -p /tmp/all-binaries/armv7
-          cp $(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f) /tmp/all-binaries/armv7/ 2>/dev/null || true
+          cp $(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null) /tmp/all-binaries/armv7/ 2>/dev/null || true
 
   package-all:
-    # Waits for all 4 build jobs to complete, then packages all-arch ipk
     needs: [build-aarch64, build-x86_64, build-armv7, build-all]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-
       - name: Install python3
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq python3 2>&1 | tail -3
-
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq python3 2>&1 | tail -3
       - name: Build ALL arch ipk
         run: |
           PKG_DIR="/tmp/all-binaries/pkg/package"
           mkdir -p "$PKG_DIR"
-
-          # Copy workspace files
           rsync -av --exclude='.git' "${{ github.workspace }}/" "$PKG_DIR/"
-
-          # Extract binaries from each arch ipk into files/usr/bin/
           mkdir -p "$PKG_DIR/files/usr/bin"
           for arch in aarch64 x86_64 armv7; do
             IPK=$(find /tmp/all-binaries/$arch -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null | head -1)
@@ -248,17 +305,12 @@ jobs:
               done
             fi
           done
-
-          # Build all-arch ipk
           export PKG_DIR="$PKG_DIR" && python3 "${{ github.workspace }}/scripts/build-all-ipk.py"
-
       - name: Find artifact
         id: find
         run: |
           IPK=$(find /tmp/all-binaries -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null | head -1)
           echo "ipk=$IPK" >> $GITHUB_OUTPUT
-          echo "Found: $IPK"
-
       - name: Upload artifact
         if: steps.find.outputs.ipk != ''
         uses: actions/upload-artifact@v4
@@ -275,9 +327,8 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
+          path: ./artifacts
           merge-multiple: false
-
       - name: Upload to Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
