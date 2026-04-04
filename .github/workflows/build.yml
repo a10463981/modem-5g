@@ -238,7 +238,7 @@ jobs:
           done
 
           # Build all-arch ipk using the scripts/build-all-ipk.py from the repo
-          PKG_DIR="$PKG_DIR" python3 "${{ github.workspace }}/scripts/build-all-ipk.py"
+          export PKG_DIR="$PKG_DIR" && python3 "${{ github.workspace }}/scripts/build-all-ipk.py"
       - name: Find artifact
         id: find
         run: |
