@@ -105,15 +105,35 @@ endef
 
 define Package/luci-app-modemserver/postinst
 #!/bin/sh
+set -e
+
 chmod +x /etc/init.d/modemserver /etc/init.d/modemsrv_helper /etc/init.d/usbmode
-/etc/init.d/modemsrv_helper enable 2>/dev/null
-/etc/init.d/modemserver enable 2>/dev/null
-/etc/init.d/usbmode enable 2>/dev/null
-# 顺序启动，避免竞争：先等 usbmode 完成驱动绑定，再启动 modemserver
-/etc/init.d/usbmode start 2>/dev/null
-/etc/init.d/modemsrv_helper start 2>/dev/null
-/etc/init.d/modemserver start 2>/dev/null
-exit 0
+
+/etc/init.d/modemsrv_helper enable
+/etc/init.d/modemserver enable
+/etc/init.d/usbmode enable
+
+# 顺序启动：先等 usbmode 完成驱动绑定，再启动 modemserver
+/etc/init.d/usbmode start
+/etc/init.d/modemsrv_helper start
+/etc/init.d/modemserver start
+
+# 验证 modemserver 是否正常监听 8080
+echo "等待 modemserver 启动..."
+for i in $(seq 1 10); do
+    if curl -s http://127.0.0.1:8080 >/dev/null 2>&1; then
+        echo "modemserver 已启动 (http://127.0.0.1:8080)"
+        exit 0
+    fi
+    sleep 1
+done
+
+# 启动失败，打印日志
+echo "[ERROR] modemserver 启动失败，请运行以下命令排查："
+echo "  logread | grep modemserver"
+echo "  ps | grep modemserver"
+echo "  /usr/bin/modemserver -port 8080 &  # 前台运行看报错"
+exit 1
 endef
 
 $(eval $(call BuildPackage,luci-app-modemserver))
