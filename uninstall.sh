@@ -1,6 +1,6 @@
 #!/bin/sh
 echo "=========================================="
-echo " 5G Modem 插件卸载"
+echo " 5G Modem 插件卸载 (modem-5g v1.1.6)"
 echo "=========================================="
 [ "$(id -u)" != "0" ] && { echo "错误: 请使用 root 权限运行"; exit 1; }
 
@@ -26,7 +26,7 @@ rm -f /etc/config/modem /etc/ModemData.db /etc/usb-mode.json
 rm -f /usr/lib/lua/luci/controller/admin/modemsrv.lua
 rm -f /usr/lib/lua/luci/model/network/proto_modemmanager.lua
 rm -rf /usr/lib/lua/luci/view/modemsrv
-rm -f /etc/rc.d/S99modemserver /etc/rc.d/S20usbmode /etc/rc.d/S99modemsrv
+rm -f /etc/rc.d/S99modemserver /etc/rc.d/S98modemsrv /etc/rc.d/S20usbmode
 echo " 已删除"
 
 echo ""
