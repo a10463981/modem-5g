@@ -36,19 +36,21 @@ jobs:
         run: |
           SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
           cd "$SDK_DIR"
-          make package/luci-app-modemserver/compile V=s 2>&1 | tail -40
-      - name: Find artifact
-        id: find
+          make package/luci-app-modemserver/compile V=s 2>&1 | tail -5
+          IPK=$(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null | head -1)
+          echo "IPK_PATH=$IPK" >> $GITHUB_OUTPUT
+          echo "Found IPK: $IPK"
+      - name: Upload artifact
         run: |
           SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
           IPK=$(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null | head -1)
-          echo "ipk=$IPK" >> $GITHUB_OUTPUT
-      - name: Upload artifact
-        if: steps.find.outputs.ipk != ''
+          echo "ipk_path=$IPK" >> $GITHUB_OUTPUT
+        id: find
+      - name: Upload IPK
         uses: actions/upload-artifact@v4
         with:
           name: luci-app-modemserver-aarch64
-          path: ${{ steps.find.outputs.ipk }}
+          path: ${{ steps.find.outputs.ipk_path }}
 
   build-x86_64:
     runs-on: ubuntu-22.04
@@ -78,19 +80,19 @@ jobs:
         run: |
           SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
           cd "$SDK_DIR"
-          make package/luci-app-modemserver/compile V=s 2>&1 | tail -40
-      - name: Find artifact
+          make package/luci-app-modemserver/compile V=s 2>&1 | tail -5
+      - name: Find IPK
         id: find
         run: |
           SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
           IPK=$(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null | head -1)
-          echo "ipk=$IPK" >> $GITHUB_OUTPUT
-      - name: Upload artifact
-        if: steps.find.outputs.ipk != ''
+          echo "ipk_path=$IPK" >> $GITHUB_OUTPUT
+          echo "Found IPK: $IPK"
+      - name: Upload IPK
         uses: actions/upload-artifact@v4
         with:
           name: luci-app-modemserver-x86_64
-          path: ${{ steps.find.outputs.ipk }}
+          path: ${{ steps.find.outputs.ipk_path }}
 
   build-armv7:
     runs-on: ubuntu-22.04
@@ -120,130 +122,39 @@ jobs:
         run: |
           SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
           cd "$SDK_DIR"
-          make package/luci-app-modemserver/compile V=s 2>&1 | tail -40
-      - name: Find artifact
+          make package/luci-app-modemserver/compile V=s 2>&1 | tail -5
+      - name: Find IPK
         id: find
         run: |
           SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
           IPK=$(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null | head -1)
-          echo "ipk=$IPK" >> $GITHUB_OUTPUT
-      - name: Upload artifact
-        if: steps.find.outputs.ipk != ''
+          echo "ipk_path=$IPK" >> $GITHUB_OUTPUT
+          echo "Found IPK: $IPK"
+      - name: Upload IPK
         uses: actions/upload-artifact@v4
         with:
           name: luci-app-modemserver-armv7
-          path: ${{ steps.find.outputs.ipk }}
-
-  build-all:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install deps
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq build-essential clang flex bison g++ gcc gawk \
-            libncurses5-dev libssl-dev perl-base python3 python3-distutils python3-yaml \
-            rsync unzip wget xz-utils file bc 2>&1 | tail -3
-      - name: Download SDKs
-        run: |
-          mkdir -p /opt/sdk-aarch64 /opt/sdk-x86_64 /opt/sdk-armv7
-          wget -q "https://downloads.openwrt.org/releases/23.05.3/targets/armsr/armv8/openwrt-sdk-23.05.3-armsr-armv8_gcc-12.3.0_musl.Linux-x86_64.tar.xz" -O /tmp/sdk-aarch64.tar.xz
-          tar xf /tmp/sdk-aarch64.tar.xz -C /opt/sdk-aarch64
-          wget -q "https://downloads.openwrt.org/releases/23.05.3/targets/x86/64/openwrt-sdk-23.05.3-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz" -O /tmp/sdk-x86_64.tar.xz
-          tar xf /tmp/sdk-x86_64.tar.xz -C /opt/sdk-x86_64
-          wget -q "https://downloads.openwrt.org/releases/23.05.3/targets/armsr/armv7/openwrt-sdk-23.05.3-armsr-armv7_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz" -O /tmp/sdk-armv7.tar.xz
-          tar xf /tmp/sdk-armv7.tar.xz -C /opt/sdk-armv7
-      - name: Build aarch64
-        run: |
-          SDK_DIR=$(ls -d /opt/sdk-aarch64/*/ | head -1)
-          rsync -av --exclude='.git' "${{ github.workspace }}/" "$SDK_DIR/package/luci-app-modemserver/"
-          cd "$SDK_DIR"
-          make defconfig 2>/dev/null || true
-          ./scripts/feeds update -a 2>&1 | tail -3
-          ./scripts/feeds install -a -p luci 2>&1 | tail -5
-          make package/luci-app-modemserver/compile V=s 2>&1 | tail -5
-          mkdir -p /tmp/all-binaries/aarch64
-          cp $(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null) /tmp/all-binaries/aarch64/ 2>/dev/null || true
-      - name: Build x86_64
-        run: |
-          SDK_DIR=$(ls -d /opt/sdk-x86_64/*/ | head -1)
-          rsync -av --exclude='.git' "${{ github.workspace }}/" "$SDK_DIR/package/luci-app-modemserver/"
-          cd "$SDK_DIR"
-          make defconfig 2>/dev/null || true
-          ./scripts/feeds update -a 2>&1 | tail -3
-          ./scripts/feeds install -a -p luci 2>&1 | tail -5
-          make package/luci-app-modemserver/compile V=s 2>&1 | tail -5
-          mkdir -p /tmp/all-binaries/x86_64
-          cp $(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null) /tmp/all-binaries/x86_64/ 2>/dev/null || true
-      - name: Build armv7
-        run: |
-          SDK_DIR=$(ls -d /opt/sdk-armv7/*/ | head -1)
-          rsync -av --exclude='.git' "${{ github.workspace }}/" "$SDK_DIR/package/luci-app-modemserver/"
-          cd "$SDK_DIR"
-          make defconfig 2>/dev/null || true
-          ./scripts/feeds update -a 2>&1 | tail -3
-          ./scripts/feeds install -a -p luci 2>&1 | tail -5
-          make package/luci-app-modemserver/compile V=s 2>&1 | tail -5
-          mkdir -p /tmp/all-binaries/armv7
-          cp $(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null) /tmp/all-binaries/armv7/ 2>/dev/null || true
-
-  package-all:
-    needs: [build-aarch64, build-x86_64, build-armv7, build-all]
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install python3
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq python3 2>&1 | tail -3
-      - name: Build ALL arch ipk
-        run: |
-          PKG_DIR="/tmp/all-binaries/pkg/package"
-          mkdir -p "$PKG_DIR"
-          rsync -av --exclude='.git' "${{ github.workspace }}/" "$PKG_DIR/"
-          mkdir -p "$PKG_DIR/files/usr/bin"
-          for arch in aarch64 x86_64 armv7; do
-            IPK=$(find /tmp/all-binaries/$arch -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null | head -1)
-            if [ -n "$IPK" ] && [ -f "$IPK" ]; then
-              rm -rf "/tmp/extract-$arch" && mkdir "/tmp/extract-$arch"
-              (cd "/tmp/extract-$arch" && ar x "$IPK" data.tar.gz 2>/dev/null && tar xzf data.tar.gz ./usr/bin/ 2>/dev/null)
-              for bin in modemserver quectel-CM-M sendat tom_modem; do
-                if [ -f "/tmp/extract-$arch/usr/bin/$bin" ]; then
-                  cp "/tmp/extract-$arch/usr/bin/$bin" "$PKG_DIR/files/usr/bin/$bin.$arch"
-                fi
-              done
-            fi
-          done
-          export PKG_DIR="$PKG_DIR" && python3 "${{ github.workspace }}/scripts/build-all-ipk.py"
-      - name: Find artifact
-        id: find
-        run: |
-          IPK=$(find /tmp/all-binaries -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null | head -1)
-          echo "ipk=$IPK" >> $GITHUB_OUTPUT
-      - name: Upload artifact
-        if: steps.find.outputs.ipk != ''
-        uses: actions/upload-artifact@v4
-        with:
-          name: luci-app-modemserver-all
-          path: ${{ steps.find.outputs.ipk }}
+          path: ${{ steps.find.outputs.ipk_path }}
 
   release:
     permissions: write-all
-    needs: [build-aarch64, build-x86_64, build-armv7, build-all, package-all]
-    runs-on: ubuntu-22.04
+    needs: [build-aarch64, build-x86_64, build-armv7]
     if: github.event_name == 'release'
+    runs-on: ubuntu-latest
     steps:
-      - name: Download artifacts
+      - name: Download all IPKs
         uses: actions/download-artifact@v4
         with:
-          path: ./artifacts
-          merge-multiple: false
+          path: ./ipks
+          merge-multiple: true
+      - name: List downloaded files
+        run: ls -lh ./ipks/
       - name: Upload to Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ github.event.release.tag_name }}"
-          git clone --depth=1 https://github.com/${{ github.repository }}.git /tmp/repo
-          cd /tmp/repo
-          find ./artifacts/ -name "*.ipk" -type f | while read f; do
-            echo "Uploading: $f -> $TAG"
+          for f in ./ipks/*.ipk; do
+            echo "Uploading: $f"
             gh release upload "$TAG" "$f" --clobber
           done
