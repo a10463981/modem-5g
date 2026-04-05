@@ -21,7 +21,7 @@ jobs:
       - name: Download SDK
         run: |
           mkdir -p /opt/sdk
-          wget -q "https://downloads.openwrt.org/releases/22.03.3/targets/armvirt/64/openwrt-sdk-22.03.3-armvirt-64_gcc-11.2.0_musl.Linux-x86_64.tar.xz" \
+          wget -q "https://downloads.openwrt.org/releases/23.05.3/targets/armvirt/64/openwrt-sdk-23.05.3-armvirt-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz" \
             -O /tmp/sdk-aarch64.tar.xz
           tar xf /tmp/sdk-aarch64.tar.xz -C /opt/sdk
       - name: Prepare
@@ -37,37 +37,6 @@ jobs:
           SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
           cd "$SDK_DIR"
           make package/luci-app-modemserver/compile V=s 2>&1 | tail -40
-      - name: Convert to ar format
-        run: |
-          SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
-          IPK=$(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null | head -1)
-          if [ -n "$IPK" ] && [ -f "$IPK" ]; then
-            python3 -c "
-import gzip, tarfile, io, os, sys
-ipk = sys.argv[1]
-out = ipk + '.tmp'
-with open(ipk,'rb') as f: td = gzip.decompress(f.read())
-tb = io.BytesIO(td)
-members = {}
-with tarfile.open(fileobj=tb) as tf:
-    for m in tf.getmembers():
-        f2 = tf.extractfile(m)
-        if f2: members[m.name] = f2.read()
-with open(out,'wb') as f:
-    f.write(b'!<arch>\n')
-    for name, data in [
-        ('debian-binary', b'2.0\n'),
-        ('control.tar.gz', members.get('./control.tar.gz', b'')),
-        ('data.tar.gz', members.get('./data.tar.gz', b'')),
-    ]:
-        hdr = '%-16s%-12d%-6d%-6d%-8o%-10d\`\n' % (name, 0, 0, 0, 0o100644, len(data))
-        f.write(hdr.encode())
-        f.write(data)
-        if len(data) % 2: f.write(b'\n')
-os.replace(out, ipk)
-print('Converted ar:', ipk)
-" "$IPK"
-          fi
       - name: Find artifact
         id: find
         run: |
@@ -94,7 +63,7 @@ print('Converted ar:', ipk)
       - name: Download SDK
         run: |
           mkdir -p /opt/sdk
-          wget -q "https://downloads.openwrt.org/releases/22.03.3/targets/x86/64/openwrt-sdk-22.03.3-x86-64_gcc-11.2.0_musl.Linux-x86_64.tar.xz" \
+          wget -q "https://downloads.openwrt.org/releases/23.05.3/targets/x86/64/openwrt-sdk-23.05.3-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz" \
             -O /tmp/sdk-x86_64.tar.xz
           tar xf /tmp/sdk-x86_64.tar.xz -C /opt/sdk
       - name: Prepare
@@ -110,37 +79,6 @@ print('Converted ar:', ipk)
           SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
           cd "$SDK_DIR"
           make package/luci-app-modemserver/compile V=s 2>&1 | tail -40
-      - name: Convert to ar format
-        run: |
-          SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
-          IPK=$(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null | head -1)
-          if [ -n "$IPK" ] && [ -f "$IPK" ]; then
-            python3 -c "
-import gzip, tarfile, io, os, sys
-ipk = sys.argv[1]
-out = ipk + '.tmp'
-with open(ipk,'rb') as f: td = gzip.decompress(f.read())
-tb = io.BytesIO(td)
-members = {}
-with tarfile.open(fileobj=tb) as tf:
-    for m in tf.getmembers():
-        f2 = tf.extractfile(m)
-        if f2: members[m.name] = f2.read()
-with open(out,'wb') as f:
-    f.write(b'!<arch>\n')
-    for name, data in [
-        ('debian-binary', b'2.0\n'),
-        ('control.tar.gz', members.get('./control.tar.gz', b'')),
-        ('data.tar.gz', members.get('./data.tar.gz', b'')),
-    ]:
-        hdr = '%-16s%-12d%-6d%-6d%-8o%-10d\`\n' % (name, 0, 0, 0, 0o100644, len(data))
-        f.write(hdr.encode())
-        f.write(data)
-        if len(data) % 2: f.write(b'\n')
-os.replace(out, ipk)
-print('Converted ar:', ipk)
-" "$IPK"
-          fi
       - name: Find artifact
         id: find
         run: |
@@ -167,7 +105,7 @@ print('Converted ar:', ipk)
       - name: Download SDK
         run: |
           mkdir -p /opt/sdk
-          wget -q "https://downloads.openwrt.org/releases/22.03.3/targets/armvirt/32/openwrt-sdk-22.03.3-armvirt-32_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz" \
+          wget -q "https://downloads.openwrt.org/releases/23.05.3/targets/armvirt/32/openwrt-sdk-23.05.3-armvirt-32_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz" \
             -O /tmp/sdk-armv7.tar.xz
           tar xf /tmp/sdk-armv7.tar.xz -C /opt/sdk
       - name: Prepare
@@ -183,37 +121,6 @@ print('Converted ar:', ipk)
           SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
           cd "$SDK_DIR"
           make package/luci-app-modemserver/compile V=s 2>&1 | tail -40
-      - name: Convert to ar format
-        run: |
-          SDK_DIR=$(ls -d /opt/sdk/*/ | head -1)
-          IPK=$(find "$SDK_DIR" -name "luci-app-modemserver_*.ipk" -type f 2>/dev/null | head -1)
-          if [ -n "$IPK" ] && [ -f "$IPK" ]; then
-            python3 -c "
-import gzip, tarfile, io, os, sys
-ipk = sys.argv[1]
-out = ipk + '.tmp'
-with open(ipk,'rb') as f: td = gzip.decompress(f.read())
-tb = io.BytesIO(td)
-members = {}
-with tarfile.open(fileobj=tb) as tf:
-    for m in tf.getmembers():
-        f2 = tf.extractfile(m)
-        if f2: members[m.name] = f2.read()
-with open(out,'wb') as f:
-    f.write(b'!<arch>\n')
-    for name, data in [
-        ('debian-binary', b'2.0\n'),
-        ('control.tar.gz', members.get('./control.tar.gz', b'')),
-        ('data.tar.gz', members.get('./data.tar.gz', b'')),
-    ]:
-        hdr = '%-16s%-12d%-6d%-6d%-8o%-10d\`\n' % (name, 0, 0, 0, 0o100644, len(data))
-        f.write(hdr.encode())
-        f.write(data)
-        if len(data) % 2: f.write(b'\n')
-os.replace(out, ipk)
-print('Converted ar:', ipk)
-" "$IPK"
-          fi
       - name: Find artifact
         id: find
         run: |
@@ -240,11 +147,11 @@ print('Converted ar:', ipk)
       - name: Download SDKs
         run: |
           mkdir -p /opt/sdk-aarch64 /opt/sdk-x86_64 /opt/sdk-armv7
-          wget -q "https://downloads.openwrt.org/releases/22.03.3/targets/armvirt/64/openwrt-sdk-22.03.3-armvirt-64_gcc-11.2.0_musl.Linux-x86_64.tar.xz" -O /tmp/sdk-aarch64.tar.xz
+          wget -q "https://downloads.openwrt.org/releases/23.05.3/targets/armvirt/64/openwrt-sdk-23.05.3-armvirt-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz" -O /tmp/sdk-aarch64.tar.xz
           tar xf /tmp/sdk-aarch64.tar.xz -C /opt/sdk-aarch64
-          wget -q "https://downloads.openwrt.org/releases/22.03.3/targets/x86/64/openwrt-sdk-22.03.3-x86-64_gcc-11.2.0_musl.Linux-x86_64.tar.xz" -O /tmp/sdk-x86_64.tar.xz
+          wget -q "https://downloads.openwrt.org/releases/23.05.3/targets/x86/64/openwrt-sdk-23.05.3-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz" -O /tmp/sdk-x86_64.tar.xz
           tar xf /tmp/sdk-x86_64.tar.xz -C /opt/sdk-x86_64
-          wget -q "https://downloads.openwrt.org/releases/22.03.3/targets/armvirt/32/openwrt-sdk-22.03.3-armvirt-32_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz" -O /tmp/sdk-armv7.tar.xz
+          wget -q "https://downloads.openwrt.org/releases/23.05.3/targets/armvirt/32/openwrt-sdk-23.05.3-armvirt-32_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz" -O /tmp/sdk-armv7.tar.xz
           tar xf /tmp/sdk-armv7.tar.xz -C /opt/sdk-armv7
       - name: Build aarch64
         run: |
