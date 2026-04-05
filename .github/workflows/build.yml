@@ -21,7 +21,7 @@ jobs:
       - name: Download SDK
         run: |
           mkdir -p /opt/sdk
-          wget -q "https://downloads.openwrt.org/releases/23.05.3/targets/armvirt/64/openwrt-sdk-23.05.3-armvirt-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz" \
+          wget -q "https://downloads.openwrt.org/releases/23.05.3/targets/armsr/armv8/openwrt-sdk-23.05.3-armsr-armv8_gcc-12.3.0_musl.Linux-x86_64.tar.xz" \
             -O /tmp/sdk-aarch64.tar.xz
           tar xf /tmp/sdk-aarch64.tar.xz -C /opt/sdk
       - name: Prepare
@@ -105,7 +105,7 @@ jobs:
       - name: Download SDK
         run: |
           mkdir -p /opt/sdk
-          wget -q "https://downloads.openwrt.org/releases/23.05.3/targets/armvirt/32/openwrt-sdk-23.05.3-armvirt-32_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz" \
+          wget -q "https://downloads.openwrt.org/releases/23.05.3/targets/armsr/armv7/openwrt-sdk-23.05.3-armsr-armv7_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz" \
             -O /tmp/sdk-armv7.tar.xz
           tar xf /tmp/sdk-armv7.tar.xz -C /opt/sdk
       - name: Prepare
@@ -147,11 +147,11 @@ jobs:
       - name: Download SDKs
         run: |
           mkdir -p /opt/sdk-aarch64 /opt/sdk-x86_64 /opt/sdk-armv7
-          wget -q "https://downloads.openwrt.org/releases/23.05.3/targets/armvirt/64/openwrt-sdk-23.05.3-armvirt-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz" -O /tmp/sdk-aarch64.tar.xz
+          wget -q "https://downloads.openwrt.org/releases/23.05.3/targets/armsr/armv8/openwrt-sdk-23.05.3-armsr-armv8_gcc-12.3.0_musl.Linux-x86_64.tar.xz" -O /tmp/sdk-aarch64.tar.xz
           tar xf /tmp/sdk-aarch64.tar.xz -C /opt/sdk-aarch64
           wget -q "https://downloads.openwrt.org/releases/23.05.3/targets/x86/64/openwrt-sdk-23.05.3-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz" -O /tmp/sdk-x86_64.tar.xz
           tar xf /tmp/sdk-x86_64.tar.xz -C /opt/sdk-x86_64
-          wget -q "https://downloads.openwrt.org/releases/23.05.3/targets/armvirt/32/openwrt-sdk-23.05.3-armvirt-32_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz" -O /tmp/sdk-armv7.tar.xz
+          wget -q "https://downloads.openwrt.org/releases/23.05.3/targets/armsr/armv7/openwrt-sdk-23.05.3-armsr-armv7_gcc-12.3.0_musl_eabi.Linux-x86_64.tar.xz" -O /tmp/sdk-armv7.tar.xz
           tar xf /tmp/sdk-armv7.tar.xz -C /opt/sdk-armv7
       - name: Build aarch64
         run: |
