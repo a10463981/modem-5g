@@ -19,7 +19,7 @@ end
 
 function AutoverifyCtrl()
     luci.http.prepare_content("application/json")
-    luci.http.write_json({})
+    luci.http.write_json({status = "ok"})
 end
 
 -- 转发模组信息请求到 modemserver (端口 8080)
