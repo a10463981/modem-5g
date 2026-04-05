@@ -1,11 +1,11 @@
 #!/bin/sh
-# 一键安装脚本 — 修复版
+# 一键安装脚本 — v1.1.6 修复版
 # 适用于 iStoreOS / ImmortalWrt / OpenWRT
 
 set -e
 
 echo "============================================"
-echo "  5G模组管理包 (modem-5g) 安装程序"
+echo "  5G模组管理包 (modem-5g) v1.1.6 安装程序"
 echo "============================================"
 
 # 检查 root 权限
@@ -23,7 +23,6 @@ echo ""
 echo "[1/7] 创建目录结构..."
 mkdir -p /usr/bin
 mkdir -p /usr/lib/lua/luci/controller/admin
-mkdir -p /usr/lib/lua/luci/model/network
 mkdir -p /usr/lib/lua/luci/view/modemsrv
 mkdir -p /etc/init.d
 mkdir -p /etc/hotplug.d/usb
@@ -41,10 +40,8 @@ echo "    完成 (4个二进制文件)"
 
 echo "[3/7] 安装 LuCI Web 界面..."
 cp luasrc/controller/admin/modemsrv.lua /usr/lib/lua/luci/controller/admin/modemsrv.lua
-cp luasrc/model/network/proto_modemmanager.lua /usr/lib/lua/luci/model/network/proto_modemmanager.lua
 cp luasrc/view/modemsrv/*.htm /usr/lib/lua/luci/view/modemsrv/
 chmod 644 /usr/lib/lua/luci/controller/admin/modemsrv.lua
-chmod 644 /usr/lib/lua/luci/model/network/proto_modemmanager.lua
 chmod 644 /usr/lib/lua/luci/view/modemsrv/*.htm
 echo "    完成 (LuCI控制器 + 视图文件)"
 
@@ -54,12 +51,11 @@ cp root/etc/init.d/modemserver /etc/init.d/modemserver
 cp root/etc/init.d/modemsrv_helper /etc/init.d/modemsrv_helper
 chmod 755 /etc/init.d/usbmode /etc/init.d/modemserver /etc/init.d/modemsrv_helper
 
-# 安装 rc.d 启动链接
-cp root/etc/rc.d/S20usbmode /etc/rc.d/S20usbmode
-cp root/etc/rc.d/S99modemserver /etc/rc.d/S99modemserver
-cp root/etc/rc.d/K10modemserver /etc/rc.d/K10modemserver
-cp root/etc/rc.d/S99modemsrv /etc/rc.d/S99modemsrv
-chmod 755 /etc/rc.d/S20usbmode /etc/rc.d/S99modemserver /etc/rc.d/K10modemserver /etc/rc.d/S99modemsrv
+# 安装 rc.d 启动链接（OpenWrt 标准：rc.d/ 只含 symlink）
+ln -sf ../init.d/modemserver /etc/rc.d/S99modemserver
+ln -sf ../init.d/modemsrv_helper /etc/rc.d/S98modemsrv
+ln -sf ../init.d/usbmode /etc/rc.d/S20usbmode
+chmod 755 /etc/rc.d/S99modemserver /etc/rc.d/S98modemsrv /etc/rc.d/S20usbmode
 
 # 安装 hotplug 脚本
 cp root/etc/hotplug.d/usb/20-modem_mode /etc/hotplug.d/usb/20-modem_mode
@@ -70,6 +66,8 @@ echo "    完成 (init脚本 + rc.d链接 + hotplug)"
 echo "[5/7] 安装配置文件..."
 [ -f root/etc/config/modem ] && cp root/etc/config/modem /etc/config/modem
 chmod 644 /etc/config/modem 2>/dev/null || true
+[ -f root/etc/ModemData.db ] && cp root/etc/ModemData.db /etc/ModemData.db
+chmod 644 /etc/ModemData.db 2>/dev/null || true
 
 echo "[6/7] 处理 ModemManager 冲突..."
 if [ -f /etc/init.d/modemmanager ]; then
