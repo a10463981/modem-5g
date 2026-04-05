@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-modemserver
-PKG_VERSION:=1.1.5
+PKG_VERSION:=1.1.6
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0
 PKG_MAINTAINER:=有房大佬
@@ -49,9 +49,9 @@ endef
 
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)
-	cp -r $(CURDIR)/luasrc $(PKG_BUILD_DIR)/
-	cp -r $(CURDIR)/root $(PKG_BUILD_DIR)/
-	cp -r $(CURDIR)/files $(PKG_BUILD_DIR)/
+	$(CP) $(CURDIR)/luasrc $(PKG_BUILD_DIR)/
+	$(CP) $(CURDIR)/root $(PKG_BUILD_DIR)/
+	$(CP) $(CURDIR)/files $(PKG_BUILD_DIR)/
 endef
 
 define Build/Configure
@@ -62,39 +62,41 @@ define Build/Compile
 endef
 
 define Package/luci-app-modemserver/install
-	# LuCI controller / view (no model/ - luasrc/model/ does not exist in this repo)
+	# LuCI controller / view
 	mkdir -p $(1)/usr/lib/lua/luci/controller
 	mkdir -p $(1)/usr/lib/lua/luci/view
-	cp -r $(PKG_BUILD_DIR)/luasrc/controller/* $(1)/usr/lib/lua/luci/controller/
-	cp -r $(PKG_BUILD_DIR)/luasrc/view/* $(1)/usr/lib/lua/luci/view/
+	$(CP) $(PKG_BUILD_DIR)/luasrc/controller/* $(1)/usr/lib/lua/luci/controller/
+	$(CP) $(PKG_BUILD_DIR)/luasrc/view/* $(1)/usr/lib/lua/luci/view/
 	# init.d - all three scripts (modemserver, modemsrv_helper, usbmode)
 	mkdir -p $(1)/etc/init.d
-	cp $(PKG_BUILD_DIR)/root/etc/init.d/modemserver $(1)/etc/init.d/
-	cp $(PKG_BUILD_DIR)/root/etc/init.d/modemsrv_helper $(1)/etc/init.d/
-	cp $(PKG_BUILD_DIR)/root/etc/init.d/usbmode $(1)/etc/init.d/        # Quectel 5G 定制版，覆盖系统的 usb-modeswitch
+	$(CP) $(PKG_BUILD_DIR)/root/etc/init.d/modemserver $(1)/etc/init.d/
+	$(CP) $(PKG_BUILD_DIR)/root/etc/init.d/modemsrv_helper $(1)/etc/init.d/
+	$(CP) $(PKG_BUILD_DIR)/root/etc/init.d/usbmode $(1)/etc/init.d/
 	chmod 0755 $(1)/etc/init.d/modemserver
 	chmod 0755 $(1)/etc/init.d/modemsrv_helper
 	chmod 0755 $(1)/etc/init.d/usbmode
 	# usb-mode.json - Quectel 5G 配置，覆盖系统 usb-modeswitch 的同名文件
 	mkdir -p $(1)/etc
-	cp $(PKG_BUILD_DIR)/root/etc/usb-mode.json $(1)/etc/usb-mode.json
+	$(CP) $(PKG_BUILD_DIR)/root/etc/usb-mode.json $(1)/etc/usb-mode.json
+	# ModemData.db - 模组数据缓存
+	$(CP) $(PKG_BUILD_DIR)/root/etc/ModemData.db $(1)/etc/ModemData.db
 	# config / hotplug.d
 	mkdir -p $(1)/etc/config
 	mkdir -p $(1)/etc/hotplug.d/usb
-	cp $(PKG_BUILD_DIR)/root/etc/config/modem $(1)/etc/config/
-	cp $(PKG_BUILD_DIR)/root/etc/hotplug.d/usb/20-modem_mode $(1)/etc/hotplug.d/usb/
+	$(CP) $(PKG_BUILD_DIR)/root/etc/config/modem $(1)/etc/config/
+	$(CP) $(PKG_BUILD_DIR)/root/etc/hotplug.d/usb/20-modem_mode $(1)/etc/hotplug.d/usb/
 	chmod 0755 $(1)/etc/hotplug.d/usb/20-modem_mode
 	# rc.d - symlinks to init.d (OpenWrt 规范：rc.d/ 只含 symlink，不含脚本本身)
 	mkdir -p $(1)/etc/rc.d
 	ln -s ../init.d/modemserver $(1)/etc/rc.d/S99modemserver
-	ln -s ../init.d/modemsrv_helper $(1)/etc/rc.d/S99modemsrv
+	ln -s ../init.d/modemsrv_helper $(1)/etc/rc.d/S98modemsrv
 	ln -s ../init.d/usbmode $(1)/etc/rc.d/S20usbmode
 	# bin scripts
 	mkdir -p $(1)/usr/bin
-	cp $(PKG_BUILD_DIR)/files/usr/bin/modemserver $(1)/usr/bin/
-	cp $(PKG_BUILD_DIR)/files/usr/bin/quectel-CM-M $(1)/usr/bin/
-	cp $(PKG_BUILD_DIR)/files/usr/bin/sendat $(1)/usr/bin/
-	cp $(PKG_BUILD_DIR)/files/usr/bin/tom_modem $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/files/usr/bin/modemserver $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/files/usr/bin/quectel-CM-M $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/files/usr/bin/sendat $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/files/usr/bin/tom_modem $(1)/usr/bin/
 	chmod 0755 $(1)/usr/bin/modemserver
 	chmod 0755 $(1)/usr/bin/quectel-CM-M
 	chmod 0755 $(1)/usr/bin/sendat
@@ -107,6 +109,8 @@ chmod +x /etc/init.d/modemserver /etc/init.d/modemsrv_helper /etc/init.d/usbmode
 /etc/init.d/modemsrv_helper enable 2>/dev/null
 /etc/init.d/modemserver enable 2>/dev/null
 /etc/init.d/usbmode enable 2>/dev/null
+# 顺序启动，避免竞争：先等 usbmode 完成驱动绑定，再启动 modemserver
+/etc/init.d/usbmode start 2>/dev/null
 /etc/init.d/modemsrv_helper start 2>/dev/null
 /etc/init.d/modemserver start 2>/dev/null
 exit 0
