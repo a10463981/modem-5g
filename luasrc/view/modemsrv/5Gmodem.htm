@@ -1,8 +1,8 @@
 <%+header%>
 
 <%
--- 获取 LuCI 登录 session cookie
-local sysauth = luci.http.getcookie("sysauth") or ""
+local http = require "luci.http"
+local cookie_header = os.getenv("HTTP_COOKIE")
 %>
 
 <head>
@@ -70,27 +70,28 @@ local sysauth = luci.http.getcookie("sysauth") or ""
     .float-button:hover { background-color: #0056b3; }
   </style>
 </head>
+
 <body>
   <div id="loadingMessage">正在加载5G管理界面...</div>
   <div id="embeddedPageContainer">
-    <iframe id="embeddedPage" src=""></iframe>
+    <iframe id="embeddedPage" src="" onload="showHalfPage()"></iframe>
   </div>
   <button class="float-button" id="backBtn">返回</button>
-  <script>
-    var MODEMSERVER_KEY = "<%=sysauth%>";
 
-    function showPage() {
+  <script>
+    function showHalfPage() {
       document.getElementById('loadingMessage').style.display = 'none';
-      document.getElementById('embeddedPage').style.transform = 'translateY(0)';
+      var embeddedPage = document.getElementById('embeddedPage');
+      embeddedPage.style.transform = 'translateY(0)';
     }
 
     function initModemUI() {
       var hostname = window.location.hostname;
       var port = window.location.port || '80';
-      var key = encodeURIComponent(MODEMSERVER_KEY);
-      var src = 'http://' + hostname + ':8080/#/login?url=' + hostname + '&port=' + port + '&key=' + key;
+      var key = '<%=cookie_header or ""%>';
+      var src = 'http://' + hostname + ':8080/#/login?url=' + hostname + '&port=' + port + '&key=' + encodeURIComponent(key);
       var iframe = document.getElementById('embeddedPage');
-      iframe.onload = showPage;
+      iframe.onload = showHalfPage;
       iframe.src = src;
     }
 
