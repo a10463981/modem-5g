@@ -1,6 +1,6 @@
 # 5G模组管理插件（modem-5g）技术备忘录
 
-**项目**：modem-5g | **日期**：2026-03-26
+**项目**：modem-5g | **日期**：2026-04-05 | **当前版本**：v1.1.6
 **目标**：在 iStoreOS（ImmortalWrt 23.05.3）上安装运行有房大佬的 5G 模组管理包
 
 ---
@@ -274,7 +274,7 @@ modem-5g/
 
 **错误方向**：
 - 同时启动两个 `quectel-CM-M` 实例（一个 `-4`，一个 `-6`）
-- 两个实例竞争同一个 `/dev/cdc-wdm0`，导致都失败（`QmiWwanGetClientID message timeout`）
+- 两个实例竞争同一个 `/dev/cdc-wdm0`，导致都失���（`QmiWwanGetClientID message timeout`）
 
 **正确方向**：
 - 单个 `quectel-CM-M` 实例同时支持 IPv4+IPv6：`quectel-CM-M -s cmnet -4 -6 &`
@@ -356,15 +356,39 @@ sendat /dev/ttyUSB2 AT+CGNINFO
 
 ---
 
+## 八、v1.1.6 修复内容
+
+### 本次修复的问题
+
+| # | 问题 | 修复方案 |
+|---|------|---------|
+| 1 | Makefile install 用 cp -r 而非 $(CP)，路径可能出错 | 改用 $(CP) 标准变量 |
+| 2 | ModemData.db 文件在仓库但 Makefile 未安装 | 添加安装行 |
+| 3 | K10modemserver STOP=10 关机顺序错误 | 删除该文件（procd 自动处理） |
+| 4 | S99modemsrv START=99 与 S99modemserver 竞争 | 改为 S98modemsrv（START=98） |
+| 5 | autoverify 接口返回 {}，登录认证不严谨 | 改为返回 {status="ok"} |
+| 6 | GitHub Actions SDK 版本 22.03.3 过旧 | 升级到 23.05.3 |
+| 7 | IPK 包名显示 1.0.0-4，版本号与源码不符 | PKG_VERSION=1.1.6 |
+| 8 | root/etc/rc.d/ 下有错误文件（重复脚本而非 symlink） | 删除 K10modemserver 和 S99modemsrv |
+
+### v1.1.4 / v1.1.5 历史问题
+
+| 版本 | 问题 | 状态 |
+|------|------|------|
+| v1.1.3 | install.sh 解压目录问题 | 已修复 |
+| v1.1.4 | IPK 安装后 LuCI 登录失败 | 已修复（v1.1.6） |
+| v1.1.5 | SDK 版本过旧，IPK 版本号错误 | 已修复 |
+
+---
 ## 八、GitHub 信息
 
 | 项目 | 值 |
 |------|-----|
 | 仓库 | https://github.com/a10463981/modem-5g |
 | 包名 | luci-app-modemserver（不变） |
-| 安装包 | modem-5g-v1.0.0.zip（5.5MB） |
+| 安装包 | modem-5g-v1.1.3.zip（4.71MB） |
 | 文档 | README.md（中文）+ README_EN.md（英文） |
 
 ---
 
-*最后更新：2026-03-26*
+*最后更新：2026-04-05 | v1.1.6*
